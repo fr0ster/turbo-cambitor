@@ -51,7 +51,7 @@ func (wa *WebStream) MiniTickers() *stream.Stream {
 }
 
 func (wa *WebStream) UserData(listenKey string) *stream.Stream {
-	return stream.New(wa.waHost, web_api.WsPath(listenKey))
+	return stream.New(wa.waHost, web_api.WsPath("/"+listenKey))
 }
 
 func New(host web_api.WsHost, symbol string) *WebStream {
