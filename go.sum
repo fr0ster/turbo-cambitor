@@ -6,6 +6,8 @@ github.com/fr0ster/turbo-restler v0.0.0-20240812083305-9c888c2f328e h1:ZXapoicVL
 github.com/fr0ster/turbo-restler v0.0.0-20240812083305-9c888c2f328e/go.mod h1:5wIo+yvlIHHn1RZs3JLZP3wkOixaOavjIsx+2uSXTDI=
 github.com/fr0ster/turbo-restler v0.0.0-20240812105227-e65754ce014b h1:CckRMe5nML+cTIkxRbkuwzxnRcLVV4372qoMIBNbaJU=
 github.com/fr0ster/turbo-restler v0.0.0-20240812105227-e65754ce014b/go.mod h1:5wIo+yvlIHHn1RZs3JLZP3wkOixaOavjIsx+2uSXTDI=
+github.com/fr0ster/turbo-restler v0.0.0-20240812124926-592f297a8c79 h1:SFqvbv3vpDEDuF5fc/2KRSmRIyLow0EIr+JSDafcMqU=
+github.com/fr0ster/turbo-restler v0.0.0-20240812124926-592f297a8c79/go.mod h1:5wIo+yvlIHHn1RZs3JLZP3wkOixaOavjIsx+2uSXTDI=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
