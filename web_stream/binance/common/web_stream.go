@@ -16,12 +16,12 @@ func (wa *WebStream) Klines(interval string) *stream.Stream {
 }
 
 func (wa *WebStream) Depths(level DepthStreamLevel) *stream.Stream {
-	wsPath := web_api.WsPath(fmt.Sprintf("/%s@depth%s", strings.ToLower(wa.symbol), string(level)))
+	wsPath := web_api.WsPath(fmt.Sprintf("/%s@depth%v", strings.ToLower(wa.symbol), level))
 	return stream.New(wa.waHost, wsPath)
 }
 
 func (wa *WebStream) Depths100ms(level DepthStreamLevel) *stream.Stream {
-	wsPath := web_api.WsPath(fmt.Sprintf("/%s@depth%s@100ms", strings.ToLower(wa.symbol), string(level)))
+	wsPath := web_api.WsPath(fmt.Sprintf("/%s@depth%v@100ms", strings.ToLower(wa.symbol), level))
 	return stream.New(wa.waHost, wsPath)
 }
 
