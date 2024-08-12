@@ -7,9 +7,8 @@ import (
 
 type (
 	Stream struct {
-		wsHost             web_api.WsHost
-		wsPath             web_api.WsPath
-		websocketKeepalive bool
+		wsHost web_api.WsHost
+		wsPath web_api.WsPath
 	}
 )
 
@@ -22,7 +21,7 @@ func (rq *Stream) Start(handler web_stream.WsHandler, errHandler web_stream.ErrH
 		rq.wsPath,
 		handler,
 		errHandler,
-		rq.websocketKeepalive)
+		web_api.SchemeWSS)
 	if err != nil {
 		return
 	}
