@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/bitly/go-simplejson v0.5.1
-	github.com/fr0ster/turbo-restler v0.0.0-20240812083305-9c888c2f328e
+	github.com/fr0ster/turbo-restler v0.0.0-20240812105227-e65754ce014b
 )
 
 require (
