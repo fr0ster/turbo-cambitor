@@ -50,7 +50,7 @@ func (ra *RestApi) QueryAllOrders() *request.Request {
 }
 
 func (ra *RestApi) ListenKey() (listenKey string, err error) {
-	response, err := rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodPost, nil, "/api/v1/listenKey", ra.sign)
+	response, err := rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodPost, nil, "/fapi/v1/listenKey", ra.sign)
 	if err != nil {
 		err = fmt.Errorf("error calling API: %v", err)
 		return
@@ -60,12 +60,12 @@ func (ra *RestApi) ListenKey() (listenKey string, err error) {
 }
 
 func (ra *RestApi) KeepAliveListenKey() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodPut, nil, "/api/v1/listenKey", ra.sign)
+	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodPut, nil, "/fapi/v1/listenKey", ra.sign)
 	return
 }
 
 func (ra *RestApi) CloseListenKey() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodDelete, nil, "/api/v1/listenKey", ra.sign)
+	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodDelete, nil, "/fapi/v1/listenKey", ra.sign)
 	return
 }
 
