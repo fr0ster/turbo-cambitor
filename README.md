@@ -1,2 +1,2 @@
-# turbo_cambitor
+# turbo-cambitor
 Low level wrappers for working with Crypto Exchange over their API
