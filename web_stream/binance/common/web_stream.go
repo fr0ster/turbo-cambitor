@@ -16,37 +16,37 @@ func (wa *WebStream) Klines(interval string) *stream.Stream {
 }
 
 func (wa *WebStream) Depths(level DepthStreamLevel) *stream.Stream {
-	wsPath := web_api.WsPath(fmt.Sprintf("%s@depth%s", strings.ToLower(wa.symbol), string(level)))
+	wsPath := web_api.WsPath(fmt.Sprintf("/%s@depth%s", strings.ToLower(wa.symbol), string(level)))
 	return stream.New(wa.waHost, wsPath)
 }
 
 func (wa *WebStream) Depths100ms(level DepthStreamLevel) *stream.Stream {
-	wsPath := web_api.WsPath(fmt.Sprintf("%s@depth%s@100ms", strings.ToLower(wa.symbol), string(level)))
+	wsPath := web_api.WsPath(fmt.Sprintf("/%s@depth%s@100ms", strings.ToLower(wa.symbol), string(level)))
 	return stream.New(wa.waHost, wsPath)
 }
 
 func (wa *WebStream) AggTrades() *stream.Stream {
-	wsPath := web_api.WsPath(fmt.Sprintf("%s@aggTrade", strings.ToLower(wa.symbol)))
+	wsPath := web_api.WsPath(fmt.Sprintf("/%s@aggTrade", strings.ToLower(wa.symbol)))
 	return stream.New(wa.waHost, wsPath)
 }
 
 func (wa *WebStream) Trades() *stream.Stream {
-	wsPath := web_api.WsPath(fmt.Sprintf("%s@Trade", strings.ToLower(wa.symbol)))
+	wsPath := web_api.WsPath(fmt.Sprintf("/%s@Trade", strings.ToLower(wa.symbol)))
 	return stream.New(wa.waHost, wsPath)
 }
 
 func (wa *WebStream) BookTickers() *stream.Stream {
-	wsPath := web_api.WsPath(fmt.Sprintf("%s@bookTicker", strings.ToLower(wa.symbol)))
+	wsPath := web_api.WsPath(fmt.Sprintf("/%s@bookTicker", strings.ToLower(wa.symbol)))
 	return stream.New(wa.waHost, wsPath)
 }
 
 func (wa *WebStream) Tickers() *stream.Stream {
-	wsPath := web_api.WsPath(fmt.Sprintf("%s@ticker", strings.ToLower(wa.symbol)))
+	wsPath := web_api.WsPath(fmt.Sprintf("/%s@ticker", strings.ToLower(wa.symbol)))
 	return stream.New(wa.waHost, wsPath)
 }
 
 func (wa *WebStream) MiniTickers() *stream.Stream {
-	wsPath := web_api.WsPath(fmt.Sprintf("%s@miniTicker", strings.ToLower(wa.symbol)))
+	wsPath := web_api.WsPath(fmt.Sprintf("/%s@miniTicker", strings.ToLower(wa.symbol)))
 	return stream.New(wa.waHost, wsPath)
 }
 
