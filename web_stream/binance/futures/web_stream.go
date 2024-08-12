@@ -24,9 +24,9 @@ func New(symbol string, useTestNet ...bool) WebStream {
 		useTestNet = append(useTestNet, false)
 	}
 	if useTestNet[0] {
-		wsEndpoint = "testnet.binancefuture.com"
+		wsEndpoint = "fstream.binancefuture.com/ws"
 	} else {
-		wsEndpoint = "ws-fapi.binance.com"
+		wsEndpoint = "fstream.binance.com/ws"
 	}
 	return common.New(web_api.WsHost(wsEndpoint), symbol)
 }
