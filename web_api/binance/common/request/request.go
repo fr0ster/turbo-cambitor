@@ -1,7 +1,6 @@
 package order
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/bitly/go-simplejson"
@@ -11,12 +10,14 @@ import (
 )
 
 type (
+	Method  string
 	Request struct {
-		sign   signature.Sign
-		waHost web_api.WsHost
-		waPath web_api.WsPath
-		method web_api.Method
-		params *simplejson.Json
+		sign       signature.Sign
+		waHost     web_api.WsHost
+		waPath     web_api.WsPath
+		method     Method
+		params     *simplejson.Json
+		connection *web_api.WebApi
 	}
 )
 
@@ -26,17 +27,21 @@ func (rq *Request) Set(name string, value interface{}) *Request {
 }
 
 func (rq *Request) Do() (order *simplejson.Json, err error) {
-	response, err := web_api.CallWebAPI(web_api.WsHost(rq.waHost), rq.waPath, rq.method, rq.params, rq.sign)
+	request := simplejson.New()
+	request.Set("method", rq.method)
+	request.Set("params", rq.params)
+	rq.connection.SignParameters(request, rq.sign)
+	response, err := rq.connection.Call(request)
 	if err != nil {
 		return
 	}
 
-	if response.Status != 200 {
-		err = fmt.Errorf("error request: %v", response.Error)
+	if response.Get("Status").MustInt() != 200 {
+		err = fmt.Errorf("error request: %v", response.Get("Error").MustString())
 		return
 	}
 
-	bytes, err := json.Marshal(response.Result)
+	bytes, err := response.Get("Result").MarshalJSON()
 	if err != nil {
 		return
 	}
@@ -44,15 +49,20 @@ func (rq *Request) Do() (order *simplejson.Json, err error) {
 	return
 }
 
-func New(apiKey, symbol string, method web_api.Method, waHost web_api.WsHost, waPath web_api.WsPath, sign signature.Sign) *Request {
+func New(apiKey, symbol string, method Method, waHost web_api.WsHost, waPath web_api.WsPath, sign signature.Sign) *Request {
 	simpleJson := simplejson.New()
 	simpleJson.Set("apiKey", apiKey)
 	simpleJson.Set("symbol", symbol)
+	wa, err := web_api.New(waHost, waPath)
+	if err != nil {
+		return nil
+	}
 	return &Request{
-		sign:   sign,
-		waHost: waHost,
-		waPath: waPath,
-		params: simpleJson,
-		method: method,
+		sign:       sign,
+		waHost:     waHost,
+		waPath:     waPath,
+		params:     simpleJson,
+		method:     method,
+		connection: wa,
 	}
 }

@@ -16,9 +16,9 @@ type WebApi interface {
 	QueryOpenOrders() *request.Request
 	QueryAllOrders() *request.Request
 	ListOfSubscriptions() *request.Request
-	Logon() (result *common.Result, err error)
-	Logout() (result *common.Result, err error)
-	Status() (result *common.Result, err error)
+	Logon() *request.Request
+	Logout() *request.Request
+	Status() *request.Request
 }
 
 func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) WebApi {

@@ -1,4 +1,4 @@
-package futures_web_stream
+package spot_web_stream
 
 import (
 	common "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
