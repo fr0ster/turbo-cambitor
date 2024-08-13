@@ -5,6 +5,7 @@ import (
 	"time"
 
 	web_api "github.com/fr0ster/turbo-restler/web_api"
+	web_stream "github.com/fr0ster/turbo-restler/web_stream"
 )
 
 const (
@@ -23,5 +24,6 @@ type (
 		symbol string
 		waHost web_api.WsHost
 		mutex  *sync.Mutex
+		stream *web_stream.WebStream
 	}
 )
