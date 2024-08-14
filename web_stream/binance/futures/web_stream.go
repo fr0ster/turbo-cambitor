@@ -9,11 +9,18 @@ import (
 
 type WebStream interface {
 	Klines(interval string) *stream.Stream
-	Depths(level common.DepthStreamLevel) *stream.Stream
-	BookTickers() *stream.Stream
-	MiniTickers() *stream.Stream
+	ContinuousKlines(interval string, contractType string) *stream.Stream
+	PartialBookDepths(level common.DepthStreamLevel, rates ...common.DepthStreamRate) *stream.Stream
+	DiffBookDepths(rates ...common.DepthStreamRate) *stream.Stream
 	AggTrades() *stream.Stream
+	Trades() *stream.Stream
+	BookTickers() *stream.Stream
+	Tickers() *stream.Stream
+	MiniTickers() *stream.Stream
 	UserData(listenKey string) *stream.Stream
+	MarkPrice() *stream.Stream
+	LiquidationOrder() *stream.Stream
+	ContractInfo() *stream.Stream
 }
 
 func New(symbol string, useTestNet ...bool) WebStream {
