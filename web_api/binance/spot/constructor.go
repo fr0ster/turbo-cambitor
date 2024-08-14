@@ -9,14 +9,10 @@ import (
 )
 
 type WebApi interface {
-	// AccountBalance() *request.Request
-	// AccountBalanceV2() *request.Request
 	AccountInformation() *request.Request
-	// AccountInformationV2() *request.Request
 	CancelOrder() *request.Request
 	CancelReplaceOrder() *request.Request
 	ExchangeInfo() *request.Request
-	// ListOfSubscriptions() *request.Request
 	Logon() *request.Request
 	Logout() *request.Request
 	OrderBook() *request.Request
@@ -25,8 +21,6 @@ type WebApi interface {
 	QueryAllOrders() *request.Request
 	QueryOpenOrders() *request.Request
 	QueryOrder() *request.Request
-	// QueryPosition() *request.Request
-	// QueryPositionV2() *request.Request
 	Status() *request.Request
 	SymbolBookTicker() *request.Request
 	SymbolPriceTicker() *request.Request
