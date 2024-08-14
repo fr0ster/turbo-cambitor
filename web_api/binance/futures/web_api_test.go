@@ -1,6 +1,7 @@
 package futures_web_api_test
 
 import (
+	"os"
 	"testing"
 
 	web_api "github.com/fr0ster/turbo-cambitor/web_api/binance/futures"
@@ -9,9 +10,9 @@ import (
 )
 
 var (
-	sign = signature.NewSignHMAC(
-		"cdf9a9537b0ab8925122bb6d72d005c4254ae3b206f3dc05f6415c366cbdaadd",
-		"fba7bd2361e6fc982e4f70b808ef55c887dd1da54ac9b1510637458e92d20ad3")
+	apiKey = os.Getenv("FUTURE_TEST_BINANCE_API_KEY")
+	secret = os.Getenv("FUTURE_TEST_BINANCE_SECRET_KEY")
+	sign   = signature.NewSignHMAC(signature.PublicKey(apiKey), signature.SecretKey(secret))
 )
 
 // Test 1: Account Balance
