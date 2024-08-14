@@ -5,8 +5,8 @@ import (
 
 	"github.com/bitly/go-simplejson"
 
-	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
+	signature "github.com/fr0ster/turbo-signer/signature"
 )
 
 const (
@@ -22,14 +22,10 @@ const (
 type (
 	DepthAPILimit int
 	WebApi        struct {
-		apiKey     string
-		apiSecret  string
-		symbol     string
-		waHost     web_api.WsHost
-		waPath     web_api.WsPath
-		mutex      *sync.Mutex
-		sign       signature.Sign
-		connection *web_api.WebApi
+		waHost web_api.WsHost
+		waPath web_api.WsPath
+		mutex  *sync.Mutex
+		sign   signature.Sign
 	}
 	Result struct {
 		APIKey           string `json:"apiKey"`
@@ -71,4 +67,12 @@ func (rq *Request) SetParameter(name string, value string) {
 		rq.Params = simplejson.New()
 	}
 	rq.Params.Set(name, value)
+}
+
+func (rq *Request) Json() *simplejson.Json {
+	js := simplejson.New()
+	js.Set("id", rq.ID)
+	js.Set("method", rq.Method)
+	js.Set("params", rq.Params)
+	return js
 }

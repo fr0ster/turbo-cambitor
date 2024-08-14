@@ -11,18 +11,32 @@ import (
 )
 
 func (wa *WebStream) Klines(interval string) *stream.Stream {
-	// wsPath := web_api.WsPath(fmt.Sprintf("%s@kline_%s", strings.ToLower(wa.symbol), interval))
 	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "@kline_" + interval)
 	return stream.New(wa.waHost, wsPath)
 }
 
-func (wa *WebStream) Depths(level DepthStreamLevel) *stream.Stream {
-	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)))
+func (wa *WebStream) ContinuousKlines(interval string, contractType string) *stream.Stream {
+	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + strings.ToLower(contractType) + "@continuousKline_" + interval)
 	return stream.New(wa.waHost, wsPath)
 }
 
-func (wa *WebStream) Depths100ms(level DepthStreamLevel) *stream.Stream {
-	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "@depth%v@100ms" + strconv.Itoa(int(level)))
+func (wa *WebStream) PartialBookDepths(level DepthStreamLevel, rates ...DepthStreamRate) *stream.Stream {
+	var wsPath web_api.WsPath
+	if len(rates) == 0 {
+		wsPath = web_api.WsPath("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)) + "@" + strconv.Itoa(int(rates[0])) + "ms")
+	} else {
+		wsPath = web_api.WsPath("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)))
+	}
+	return stream.New(wa.waHost, wsPath)
+}
+
+func (wa *WebStream) DiffBookDepths(rates ...DepthStreamRate) *stream.Stream {
+	var wsPath web_api.WsPath
+	if len(rates) == 0 {
+		wsPath = web_api.WsPath("/" + strings.ToLower(wa.symbol) + "@depth" + "@" + strconv.Itoa(int(rates[0])) + "ms")
+	} else {
+		wsPath = web_api.WsPath("/" + strings.ToLower(wa.symbol) + "@depth")
+	}
 	return stream.New(wa.waHost, wsPath)
 }
 
@@ -53,6 +67,21 @@ func (wa *WebStream) MiniTickers() *stream.Stream {
 
 func (wa *WebStream) UserData(listenKey string) *stream.Stream {
 	return stream.New(wa.waHost, web_api.WsPath("/"+listenKey))
+}
+
+func (wa *WebStream) MarkPrice() *stream.Stream {
+	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "@markPrice")
+	return stream.New(wa.waHost, wsPath)
+}
+
+func (wa *WebStream) LiquidationOrder() *stream.Stream {
+	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "@forceOrder")
+	return stream.New(wa.waHost, wsPath)
+}
+
+func (wa *WebStream) ContractInfo() *stream.Stream {
+	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "!contractInfo")
+	return stream.New(wa.waHost, wsPath)
 }
 
 func New(host web_api.WsHost, symbol string) *WebStream {
