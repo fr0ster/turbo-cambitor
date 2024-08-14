@@ -1,6 +1,7 @@
 package spot_web_api_test
 
 import (
+	"os"
 	"testing"
 
 	web_api "github.com/fr0ster/turbo-cambitor/web_api/binance/spot"
@@ -9,9 +10,9 @@ import (
 )
 
 var (
-	sign = signature.NewSignHMAC(
-		"5rjHwsoHnN3B5Z3Ij2iGK49UzqT63BzMakYbksqLKVJh97uIpWP5cYBqnVwFXXyP",
-		"S984dI0W5EraQYTz1n8bLTYxGGlKGZPg4aHu7lGCf4qiJ0ovJdw0YjtJ52Xw5VGp")
+	apiKey = os.Getenv("SPOT_TEST_BINANCE_API_KEY")
+	secret = os.Getenv("SPOT_TEST_BINANCE_SECRET_KEY")
+	sign   = signature.NewSignHMAC(signature.PublicKey(apiKey), signature.SecretKey(secret))
 )
 
 // Test 3: Account Information
