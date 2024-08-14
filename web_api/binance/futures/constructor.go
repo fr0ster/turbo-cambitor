@@ -14,16 +14,12 @@ type WebApi interface {
 	AccountInformation() *request.Request
 	AccountInformationV2() *request.Request
 	CancelOrder() *request.Request
-	ModifyOrder() *request.Request // CancelReplaceOrder for spot and ModifyOrder for futures
-	// ExchangeInfo() *request.Request
-	// ListOfSubscriptions() *request.Request
+	ModifyOrder() *request.Request
 	Logon() *request.Request
 	Logout() *request.Request
 	OrderBook() *request.Request
 	Ping() *request.Request
 	PlaceOrder() *request.Request
-	// QueryAllOrders() *request.Request
-	// QueryOpenOrders() *request.Request
 	QueryOrder() *request.Request
 	QueryPosition() *request.Request
 	QueryPositionV2() *request.Request
