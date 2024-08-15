@@ -84,6 +84,21 @@ func (wa *WebStream) ContractInfo() *stream.Stream {
 	return stream.New(wa.waHost, wsPath)
 }
 
+func (wa *WebStream) Subscribe() *stream.Stream {
+	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "!contractInfo")
+	return stream.New(wa.waHost, wsPath)
+}
+
+func (wa *WebStream) ListOfSubscriptions() *stream.Stream {
+	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "!contractInfo")
+	return stream.New(wa.waHost, wsPath)
+}
+
+func (wa *WebStream) Unsubscribe() *stream.Stream {
+	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "!contractInfo")
+	return stream.New(wa.waHost, wsPath)
+}
+
 func New(host web_api.WsHost, symbol string) *WebStream {
 	return &WebStream{
 		symbol: symbol,

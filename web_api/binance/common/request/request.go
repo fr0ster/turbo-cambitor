@@ -51,7 +51,7 @@ func (rq *Request) SetSignature() *Request {
 	if rq.params == nil {
 		rq.params = simplejson.New()
 	}
-	rq.params, _ = signature.SignParameters(rq.params, rq.sign)
+	rq.params, _ = rq.sign.SignParameters(rq.params)
 	return rq
 }
 
