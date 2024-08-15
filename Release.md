@@ -1,8 +1,55 @@
 # Release Notes for Turbo-Cambitor
 
+# Release Notes for Turbo-Cambitor
+
+## v0.2.7
+
+### Release Date: 2024-08-15
+
+### Changes
+- **Turbo-cambitor**:
+  - Removed implementations of the following functions from `futures_web_stream.WebStream` and `spot_web_stream.WebStream` and moved them to `Stream`:
+    - `Subscribe([]string) (response *simplejson.Json, err error)`
+    - `ListOfSubscriptions() (response *simplejson.Json, err error)`
+    - `Unsubscribe([]string) (response *simplejson.Json, err error)`
+  - Upgraded to `github.com/fr0ster/turbo-restler` version `v0.2.6`, which includes new features and improvements.
+
+### Example Usage
+#### Stream Functions
+```go
+package main
+
+import (
+  web_stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/futures"
+	"github.com/sirupsen/logrus"
+)
+
+func main() {
+  stream := web_stream.New(true).DynamicStream()
+  logrus.Infof("Stream: %v", stream)
+  response, err := stream.Subscribe([]string{"btcusdt@aggTrade"})
+  if err != nil {
+    logrus.Fatalf("Error: %v", err)
+  }
+  logrus.Infof("Response: %v", response)
+  response, err = stream.ListOfSubscriptions()
+  if err != nil {
+    logrus.Fatalf("Error: %v", err)
+  }
+  logrus.Infof("Response: %v", response)
+  response, err = stream.Unsubscribe([]string{"btcusdt@aggTrade"})
+  if err != nil {
+    logrus.Fatalf("Error: %v", err)
+  }
+  logrus.Infof("Response: %v", response)
+}
+```
+
+---
+
 ## v0.2.6
 
-### Release Date: 2024-09-15
+### Release Date: 2024-08-15
 
 ### Changes
 - **New Functions Implemented**:
@@ -39,7 +86,7 @@ func main() {
 
 ## v0.2.5
 
-### Release Date: 2024-09-15
+### Release Date: 2024-08-15
 
 ### Changes
 - **Updated Dependencies**:
@@ -50,7 +97,7 @@ func main() {
 
 ## v0.2.4
 
-### Release Date: 2024-09-15
+### Release Date: 2024-08-15
 
 ### Changes
 - **Fixed rq.params Call**: Corrected the call to `rq.params, _ = rq.sign.SignParameters(rq.params)` to ensure proper signing of parameters.
