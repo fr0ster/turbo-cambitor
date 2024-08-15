@@ -1,5 +1,18 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.3
+
+### Release Date: 2024-08-15
+
+### Changes
+- **Updated Dependencies**:
+  - Upgraded to `github.com/fr0ster/turbo-signer` version `v0.1.2`, which includes new features and improvements.
+  - Upgraded to `github.com/fr0ster/turbo-restler` version `v0.2.2`, which includes new features and improvements.
+
+---
+
+# Release Notes for Turbo-Cambitor
+
 ## v0.2.2
 
 ### Release Date: 2024-08-14
