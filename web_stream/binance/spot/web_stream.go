@@ -1,6 +1,7 @@
 package spot_web_stream
 
 import (
+	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 
@@ -21,6 +22,9 @@ type WebStream interface {
 	MarkPrice() *stream.Stream
 	LiquidationOrder() *stream.Stream
 	ContractInfo() *stream.Stream
+	Subscribe([]string) (response *simplejson.Json, err error)
+	ListOfSubscriptions() (response *simplejson.Json, err error)
+	Unsubscribe([]string) (response *simplejson.Json, err error)
 }
 
 func New(symbol string, useTestNet ...bool) WebStream {

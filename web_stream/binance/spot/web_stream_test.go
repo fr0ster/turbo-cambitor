@@ -166,3 +166,21 @@ func TestContractInfo(t *testing.T) {
 	assert.NotNil(t, stopC)
 	close(stopC)
 }
+
+func TestSubscribe(t *testing.T) {
+	response, err := web_stream.New("BTCUSDT", true).Subscribe([]string{"aggTrade"})
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+}
+
+func TestListOfSubscriptions(t *testing.T) {
+	response, err := web_stream.New("BTCUSDT", true).ListOfSubscriptions()
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+}
+
+func TestUnsubscribe(t *testing.T) {
+	response, err := web_stream.New("BTCUSDT", true).Unsubscribe([]string{"aggTrade"})
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+}

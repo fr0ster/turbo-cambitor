@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bitly/go-simplejson"
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 
 	web_api "github.com/fr0ster/turbo-restler/web_api"
@@ -84,19 +85,50 @@ func (wa *WebStream) ContractInfo() *stream.Stream {
 	return stream.New(wa.waHost, wsPath)
 }
 
-func (wa *WebStream) Subscribe() *stream.Stream {
-	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "!contractInfo")
-	return stream.New(wa.waHost, wsPath)
+func (wa *WebStream) Subscribe(streams []string) (response *simplejson.Json, err error) {
+	wsPath := web_api.WsPath("")
+	socket, err := web_api.New(wa.waHost, wsPath)
+	if err != nil {
+		return nil, err
+	}
+	rq := simplejson.New()
+	rq.Set("method", "SUBSCRIBE")
+	rq.Set("id", 1)
+	params := make([]string, 0)
+	for _, stream := range streams {
+		params = append(params, strings.ToLower(wa.symbol)+"@"+stream)
+	}
+	rq.Set("params", params)
+	return socket.Call(rq)
 }
 
-func (wa *WebStream) ListOfSubscriptions() *stream.Stream {
-	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "!contractInfo")
-	return stream.New(wa.waHost, wsPath)
+func (wa *WebStream) ListOfSubscriptions() (response *simplejson.Json, err error) {
+	wsPath := web_api.WsPath("")
+	socket, err := web_api.New(wa.waHost, wsPath)
+	if err != nil {
+		return nil, err
+	}
+	rq := simplejson.New()
+	rq.Set("method", "LIST_SUBSCRIPTIONS")
+	rq.Set("id", 1)
+	return socket.Call(rq)
 }
 
-func (wa *WebStream) Unsubscribe() *stream.Stream {
-	wsPath := web_api.WsPath("/" + strings.ToLower(wa.symbol) + "!contractInfo")
-	return stream.New(wa.waHost, wsPath)
+func (wa *WebStream) Unsubscribe(streams []string) (response *simplejson.Json, err error) {
+	wsPath := web_api.WsPath("")
+	socket, err := web_api.New(wa.waHost, wsPath)
+	if err != nil {
+		return nil, err
+	}
+	rq := simplejson.New()
+	rq.Set("method", "SUBSCRIBE")
+	rq.Set("id", 1)
+	params := make([]string, 0)
+	for _, stream := range streams {
+		params = append(params, strings.ToLower(wa.symbol)+"@"+stream)
+	}
+	rq.Set("params", params)
+	return socket.Call(rq)
 }
 
 func New(host web_api.WsHost, symbol string) *WebStream {
