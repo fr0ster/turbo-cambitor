@@ -27,7 +27,7 @@ func mockErrHandler(err error) {
 
 func TestStartBinanceStreamer(t *testing.T) {
 	// Test 2: Binance stream
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream)
 
 	doneC, stopC, err :=
@@ -51,7 +51,7 @@ func TestStartBinanceStreamer(t *testing.T) {
 }
 
 func TestKlines(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.Klines("1m"))
 	stopC, _, err := stream.Klines("1m").SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -60,7 +60,7 @@ func TestKlines(t *testing.T) {
 }
 
 func TestContinuousKlines(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.ContinuousKlines("1m", "BTCUSDT"))
 	stopC, _, err := stream.ContinuousKlines("1m", "BTCUSDT").SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -69,7 +69,7 @@ func TestContinuousKlines(t *testing.T) {
 }
 
 func TestPartialBookDepths(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.PartialBookDepths(common.DepthStreamLevel5, common.DepthStreamRate100ms))
 	stopC, _, err := stream.PartialBookDepths(common.DepthStreamLevel5, common.DepthStreamRate100ms).SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -78,7 +78,7 @@ func TestPartialBookDepths(t *testing.T) {
 }
 
 func TestDiffBookDepths(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.DiffBookDepths(common.DepthStreamRate100ms))
 	stopC, _, err := stream.DiffBookDepths(common.DepthStreamRate100ms).SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -87,7 +87,7 @@ func TestDiffBookDepths(t *testing.T) {
 }
 
 func TestAggTrades(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.AggTrades())
 	stopC, _, err := stream.AggTrades().SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -96,7 +96,7 @@ func TestAggTrades(t *testing.T) {
 }
 
 func TestTrades(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.Trades())
 	stopC, _, err := stream.Trades().SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -105,7 +105,7 @@ func TestTrades(t *testing.T) {
 }
 
 func TestBookTickers(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.BookTickers())
 	stopC, _, err := stream.BookTickers().SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -114,7 +114,7 @@ func TestBookTickers(t *testing.T) {
 }
 
 func TestTickers(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.Tickers())
 	stopC, _, err := stream.Tickers().SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -123,7 +123,7 @@ func TestTickers(t *testing.T) {
 }
 
 func TestMiniTickers(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.MiniTickers())
 	stopC, _, err := stream.MiniTickers().SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -132,7 +132,7 @@ func TestMiniTickers(t *testing.T) {
 }
 
 func TestUserData(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.UserData("listenKey"))
 	stopC, _, err := stream.UserData("listenKey").SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -141,7 +141,7 @@ func TestUserData(t *testing.T) {
 }
 
 func TestMarkPrice(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.MarkPrice())
 	stopC, _, err := stream.MarkPrice().SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -150,7 +150,7 @@ func TestMarkPrice(t *testing.T) {
 }
 
 func TestLiquidationOrder(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.LiquidationOrder())
 	stopC, _, err := stream.LiquidationOrder().SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -159,7 +159,7 @@ func TestLiquidationOrder(t *testing.T) {
 }
 
 func TestContractInfo(t *testing.T) {
-	stream := web_stream.New("BTCUSDT", true)
+	stream := web_stream.New(true)
 	assert.NotNil(t, stream.ContractInfo())
 	stopC, _, err := stream.ContractInfo().SetHandler(mockHandler).SetErrHandler(mockErrHandler).Start()
 	assert.NoError(t, err)
@@ -167,20 +167,16 @@ func TestContractInfo(t *testing.T) {
 	close(stopC)
 }
 
-func TestSubscribe(t *testing.T) {
-	response, err := web_stream.New("BTCUSDT", true).Subscribe([]string{"aggTrade"})
+func TestSubscribing(t *testing.T) {
+	stream := web_stream.New(true).DynamicStream()
+	assert.NotNil(t, stream)
+	response, err := stream.Subscribe([]string{"btcusdt@aggTrade"})
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
-}
-
-func TestListOfSubscriptions(t *testing.T) {
-	response, err := web_stream.New("BTCUSDT", true).ListOfSubscriptions()
+	response, err = stream.ListOfSubscriptions()
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
-}
-
-func TestUnsubscribe(t *testing.T) {
-	response, err := web_stream.New("BTCUSDT", true).Unsubscribe([]string{"aggTrade"})
+	response, err = stream.Unsubscribe([]string{"btcusdt@aggTrade"})
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }

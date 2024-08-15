@@ -1,7 +1,6 @@
 package spot_web_stream
 
 import (
-	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 
@@ -22,12 +21,10 @@ type WebStream interface {
 	MarkPrice() *stream.Stream
 	LiquidationOrder() *stream.Stream
 	ContractInfo() *stream.Stream
-	Subscribe([]string) (response *simplejson.Json, err error)
-	ListOfSubscriptions() (response *simplejson.Json, err error)
-	Unsubscribe([]string) (response *simplejson.Json, err error)
+	DynamicStream() *stream.Stream
 }
 
-func New(symbol string, useTestNet ...bool) WebStream {
+func New(useTestNet ...bool) WebStream {
 	var (
 		wsEndpoint string
 	)
@@ -39,5 +36,5 @@ func New(symbol string, useTestNet ...bool) WebStream {
 	} else {
 		wsEndpoint = "stream.binance.com:9443/ws"
 	}
-	return common.New(web_api.WsHost(wsEndpoint), symbol)
+	return common.New(web_api.WsHost(wsEndpoint))
 }
