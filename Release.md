@@ -1,5 +1,42 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.6
+
+### Release Date: 2024-09-15
+
+### Changes
+- **New Functions Implemented**:
+  - `Subscribe([]string) (response *simplejson.Json, err error)`: Allows subscribing to a list of topics.
+  - `ListOfSubscriptions() (response *simplejson.Json, err error)`: Retrieves the current list of subscriptions.
+  - `Unsubscribe([]string) (response *simplejson.Json, err error)`: Allows unsubscribing from a list of topics.
+
+### Example Usage
+#### Subscribe
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/fr0ster/turbo-cambitor/web_stream"
+    "github.com/bitly/go-simplejson"
+)
+
+func main() {
+    stream := web_stream.NewWebStream("https://api.example.com")
+
+    topics := []string{"topic1", "topic2"}
+    response, err := stream.Subscribe(topics)
+    if err != nil {
+        log.Fatal("Subscribe error:", err)
+    }
+
+    fmt.Println("Subscribe response:", response)
+}
+```
+
+---
+
 ## v0.2.5
 
 ### Release Date: 2024-09-15
