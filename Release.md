@@ -1,8 +1,64 @@
 # Release Notes for Turbo-Cambitor
 
+# Release Notes for Turbo-Cambitor
+
+## v0.2.10
+
+### Release Date: 2024-08-16
+
+### Changes
+- **Turbo-cambitor**:
+  - Refactored web stream functions to improve code maintainability and performance.
+
+### Example Usage
+#### Refactored Web Stream Functions
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/fr0ster/turbo-cambitor/stream"
+    "github.com/bitly/go-simplejson"
+)
+
+// Mock handler for WebSocket messages
+func mockHandler(message *simplejson.Json) {
+	logrus.Infof("Received message: %+v", message)
+}
+
+// Mock error handler for WebSocket errors
+func mockErrHandler(err error) {
+	logrus.Errorf("Error: %v", err)
+}
+
+func main() {
+	stream := web_stream.
+		New(true).
+		Stream().
+		SetSymbol("BTCUSDT").
+		SetHandler(mockHandler).
+		SetErrHandler(mockErrHandler).
+		SetTimeOut(5 * time.Second)
+	_ = stream.Start()
+	response, _ := stream.ListSubscriptions()
+	logrus.Infof("Subscriptions: %+v", response)
+	stream.AddSubscriptions("btcusdt@aggTrade")
+	response, _ = stream.ListSubscriptions()
+	logrus.Infof("Subscriptions: %+v", response)
+	stream.RemoveSubscriptions("btcusdt@aggTrade")
+	time.Sleep(5 * time.Second)
+	response, _ = stream.ListSubscriptions()
+	logrus.Infof("Subscriptions: %+v", response)
+	stream.Stop()
+}
+```
+
+---
+
 ## v0.2.9
 
-### Release Date: 2024-10-01
+### Release Date: 2024-08-16
 
 ### Changes
 - **Turbo-cambitor**:
