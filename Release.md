@@ -1,6 +1,14 @@
 # Release Notes for Turbo-Cambitor
 
-# Release Notes for Turbo-Cambitor
+## v0.2.11
+
+### Release Date: 2024-08-16
+
+### Changes
+- **Turbo-cambitor**:
+  - Set ping handler for WebSocket connection in Binance stream to maintain connection stability.
+
+---
 
 ## v0.2.10
 
