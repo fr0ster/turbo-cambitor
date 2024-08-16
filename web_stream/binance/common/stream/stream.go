@@ -43,7 +43,8 @@ func (stream *Stream) Start() (err error) {
 				select {
 				case <-stream.quit:
 					return
-				case <-time.After(100 * time.Microsecond):
+				// case <-time.After(100 * time.Microsecond):
+				default:
 					response, err := stream.socket.Read()
 					if err != nil {
 						stream.wsErrHandler(err)

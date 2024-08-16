@@ -1,5 +1,17 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.17
+
+### Release Date: 2024-08-16
+
+### Changes
+- **Turbo-cambitor**:
+  - Updated `fr0ster/turbo-restler` dependency to v0.2.8.
+  - Removed timeout functionality from `WebStream.Start` to simplify connection management.
+
+
+---
+
 ## v0.2.16
 
 ### Release Date: 2024-08-16
