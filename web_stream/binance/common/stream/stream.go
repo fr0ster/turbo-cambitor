@@ -71,14 +71,7 @@ func (stream *Stream) Close() {
 
 func (stream *Stream) SetHandler(handler WsHandler) *Stream {
 	if stream.symbol != "" {
-		genHandler := func(symbol string) func(message *simplejson.Json) {
-			return func(message *simplejson.Json) {
-				if message.Get("s").MustString() == symbol {
-					handler(message)
-				}
-			}
-		}
-		stream.callStack["defaultHandler"] = genHandler(stream.symbol)
+		stream.callStack["defaultHandler"] = handler
 	}
 	return stream
 }

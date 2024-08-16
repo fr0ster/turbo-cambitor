@@ -1,5 +1,15 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.18
+
+### Release Date: 2024-08-16
+
+### Changes
+- **Turbo-cambitor**:
+  - For `SetHandler(handler WsHandler) *Stream`, removed default checks. Now all checks must be implemented in user-defined handlers.
+
+---
+
 ## v0.2.17
 
 ### Release Date: 2024-08-16
