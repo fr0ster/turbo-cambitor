@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bitly/go-simplejson"
+	"github.com/gorilla/websocket"
 
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 
@@ -181,6 +182,15 @@ func New(
 	if err != nil {
 		logrus.Fatalf("Error: %v", err)
 	}
+	// Встановлення обробника для ping повідомлень
+	stream.Socket().SetPingHandler(func(appData string) error {
+		logrus.Debug("Received ping:", appData)
+		err := stream.Socket().WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(time.Second))
+		if err != nil {
+			logrus.Debug("Error sending pong:", err)
+		}
+		return nil
+	})
 	return &Stream{
 		wsHost:          host,
 		wsPath:          path,
