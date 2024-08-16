@@ -17,7 +17,7 @@ type (
 	WsHandlerMap map[string]WsHandler
 
 	// WsHandler handles messages
-	WsHandler func(string, *simplejson.Json)
+	WsHandler func(*simplejson.Json)
 
 	// ErrHandler handles errors
 	ErrHandler func(err error)
@@ -48,8 +48,8 @@ func (stream *Stream) Start() (err error) {
 					if err != nil {
 						stream.wsErrHandler(err)
 					}
-					for subscription, handler := range stream.callStack {
-						handler(subscription, response)
+					for _, handler := range stream.callStack {
+						handler(response)
 					}
 				}
 			}
@@ -70,10 +70,10 @@ func (stream *Stream) Close() {
 
 func (stream *Stream) SetHandler(handler WsHandler) *Stream {
 	if stream.symbol != "" {
-		genHandler := func(symbol string) func(subscription string, message *simplejson.Json) {
-			return func(subscription string, message *simplejson.Json) {
+		genHandler := func(symbol string) func(message *simplejson.Json) {
+			return func(message *simplejson.Json) {
 				if message.Get("s").MustString() == symbol {
-					handler(subscription, message)
+					handler(message)
 				}
 			}
 		}
@@ -93,9 +93,9 @@ func (stream *Stream) AddSubscriptions(handler WsHandler, params ...string) {
 		// Add handlers for each subscription
 		for _, subscription := range params {
 			parts := strings.Split(subscription, "@")
-			stream.callStack[subscription] = func(subscription string, message *simplejson.Json) {
+			stream.callStack[subscription] = func(message *simplejson.Json) {
 				if message.Get("e").MustString() == parts[1] && strings.EqualFold(message.Get("s").MustString(), parts[0]) {
-					handler(subscription, message)
+					handler(message)
 				}
 			}
 		}
@@ -123,7 +123,7 @@ func (stream *Stream) ListSubscriptions(async ...bool) (response *simplejson.Jso
 		const id = 2
 
 		if stream.callStack["listResponseHandler"] == nil {
-			stream.callStack["listResponseHandler"] = func(_ string, message *simplejson.Json) {
+			stream.callStack["listResponseHandler"] = func(message *simplejson.Json) {
 				if message.Get("id").MustInt() == id {
 					stream.responseC <- message
 				}

@@ -16,7 +16,7 @@ const (
 )
 
 // Mock handler for WebSocket messages
-func mockHandler(subscription string, message *simplejson.Json) {
+func mockHandler(message *simplejson.Json) {
 	logrus.Infof("Received message: %+v", message)
 }
 
@@ -33,8 +33,8 @@ func TestStartBinanceStreamer(t *testing.T) {
 	streamer :=
 		stream.Klines("1m").SetSymbol("BTCUSDT").
 			SetHandler(
-				func(subscription string, message *simplejson.Json) {
-					mockHandler(subscription, message)
+				func(message *simplejson.Json) {
+					mockHandler(message)
 				}).
 			SetErrHandler(
 				func(err error) {
