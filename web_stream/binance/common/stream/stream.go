@@ -92,25 +92,27 @@ func (stream *Stream) SetErrHandler(errHandler ErrHandler) *Stream {
 	return stream
 }
 
-func (stream *Stream) AddSubscriptions(params ...string) {
-	const id = 1
-	// Add handlers for each subscription
-	for _, subscription := range params {
-		parts := strings.Split(subscription, "@")
-		stream.callStack[subscription] = func(message *simplejson.Json) {
-			if message.Get("e").MustString() == parts[1] && strings.EqualFold(message.Get("s").MustString(), parts[0]) {
-				logrus.Infof("Received message: %+v", message)
+func (stream *Stream) AddSubscriptions(handler WsHandler, params ...string) {
+	if len(params) > 0 {
+		const id = 1
+		// Add handlers for each subscription
+		for _, subscription := range params {
+			parts := strings.Split(subscription, "@")
+			stream.callStack[subscription] = func(message *simplejson.Json) {
+				if message.Get("e").MustString() == parts[1] && strings.EqualFold(message.Get("s").MustString(), parts[0]) {
+					handler(message)
+				}
 			}
 		}
-	}
-	// Send subscription request
-	rq := simplejson.New()
-	rq.Set("method", "SUBSCRIBE")
-	rq.Set("id", id)
-	rq.Set("params", params)
-	err := stream.socket.Send(rq)
-	if err != nil {
-		logrus.Fatalf("Error: %v", err)
+		// Send subscription request
+		rq := simplejson.New()
+		rq.Set("method", "SUBSCRIBE")
+		rq.Set("id", id)
+		rq.Set("params", params)
+		err := stream.socket.Send(rq)
+		if err != nil {
+			logrus.Fatalf("Error: %v", err)
+		}
 	}
 }
 

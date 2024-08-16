@@ -1,5 +1,72 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.12
+
+### Release Date: 2024-08-16
+
+### Changes
+- **Turbo-cambitor**:
+  - Refactored web stream functions to improve code maintainability and performance.
+
+### Example Usage
+#### Refactored Web Stream Functions
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "time"
+    "github.com/fr0ster/turbo-cambitor/stream"
+    "github.com/bitly/go-simplejson"
+)
+
+var (
+	interrupt chan os.Signal = make(chan os.Signal, 1)
+	quit                     = make(chan struct{})
+)
+
+// Mock handler for WebSocket messages
+func mockHandler(message *simplejson.Json) {
+	logrus.Infof("Received message: %+v", message)
+}
+
+// Mock error handler for WebSocket errors
+func mockErrHandler(err error) {
+	logrus.Errorf("Error: %v", err)
+}
+
+func main() {
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-interrupt
+		// Закриваємо канал quit, щоб сповістити всі горутина про необхідність завершення
+		close(quit)
+	}()
+	stream := web_stream.
+		New(true).
+		Stream().
+		SetSymbol("BTCUSDT").
+		SetHandler(mockHandler).
+		SetErrHandler(mockErrHandler).
+		SetTimeOut(5 * time.Second)
+	_ = stream.Start()
+	assert.NoError(t, err)
+	response, _ := stream.ListSubscriptions()
+	logrus.Infof("Subscriptions: %+v", response)
+	stream.AddSubscriptions(mockHandler, "btcusdt@aggTrade")
+	response, _ = stream.ListSubscriptions()
+	logrus.Infof("Subscriptions: %+v", response)
+	stream.RemoveSubscriptions("btcusdt@aggTrade")
+	time.Sleep(timeOut)
+	response, _ = stream.ListSubscriptions()
+	logrus.Infof("Subscriptions: %+v", response)
+	stream.Stop()
+}
+```
+
+---
+
 ## v0.2.11
 
 ### Release Date: 2024-08-16
