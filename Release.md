@@ -1,5 +1,15 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.13
+
+### Release Date: 2024-08-16
+
+### Changes
+- **Turbo-cambitor**:
+  - Refactored WebSocket connection handling in Binance stream to improve reliability and performance.
+
+---
+
 ## v0.2.12
 
 ### Release Date: 2024-08-16
