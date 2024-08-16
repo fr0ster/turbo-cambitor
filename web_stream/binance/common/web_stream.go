@@ -118,9 +118,8 @@ func (wa *WebStream) ContractInfo() *stream.Stream {
 	return stream.New(wa.waHost, wsPath)
 }
 
-func (wa *WebStream) Symbol(symbol string) *WebStream {
-	wa.symbol = symbol
-	return wa
+func (wa *WebStream) Stream() *stream.Stream {
+	return stream.New(wa.waHost, "")
 }
 
 func New(host web_api.WsHost) *WebStream {

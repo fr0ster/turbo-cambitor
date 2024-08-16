@@ -21,7 +21,7 @@ type WebStream interface {
 	MarkPrice() *stream.Stream
 	LiquidationOrder() *stream.Stream
 	ContractInfo() *stream.Stream
-	Symbol(symbol string) *common.WebStream
+	Stream() *stream.Stream
 }
 
 func New(useTestNet ...bool) WebStream {
