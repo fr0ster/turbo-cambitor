@@ -1,4 +1,15 @@
 # Release Notes for Turbo-Cambitor
+
+## v0.2.16
+
+### Release Date: 2024-08-16
+
+### Changes
+- **Turbo-cambitor**:
+  - Merge commit '65bd5729c070933d4751d8acfe8fed017f68f0aa'
+
+---
+
 ## v0.2.15
 
 ### Release Date: 2024-08-16
