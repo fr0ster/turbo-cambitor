@@ -1,7 +1,6 @@
 package streamer
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -38,28 +37,24 @@ type (
 
 func (stream *Stream) Start() (err error) {
 	if !stream.streamIsStarted {
-		if len(stream.callStack) > 0 {
-			stream.socket.Socket().SetReadLimit(655350)
-			go func() {
-				for {
-					select {
-					case <-stream.quit:
-						return
-					case <-time.After(100 * time.Microsecond):
-						response, err := stream.socket.Read()
-						if err != nil {
-							stream.wsErrHandler(err)
-						}
-						for _, handler := range stream.callStack {
-							handler(response)
-						}
+		stream.socket.Socket().SetReadLimit(655350)
+		go func() {
+			for {
+				select {
+				case <-stream.quit:
+					return
+				case <-time.After(100 * time.Microsecond):
+					response, err := stream.socket.Read()
+					if err != nil {
+						stream.wsErrHandler(err)
+					}
+					for _, handler := range stream.callStack {
+						handler(response)
 					}
 				}
-			}()
-			stream.streamIsStarted = true
-		} else {
-			err = fmt.Errorf("no handlers")
-		}
+			}
+		}()
+		stream.streamIsStarted = true
 	}
 	return
 }
