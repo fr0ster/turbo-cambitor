@@ -153,16 +153,3 @@ func TestContractInfo(t *testing.T) {
 	assert.NotNil(t, stopC)
 	close(stopC)
 }
-
-func TestStreamStartAndStop(t *testing.T) {
-	stream := web_stream.New(true).Symbol("BTCUSDT").MarkPrice().SetHandler(mockHandler).SetErrHandler(mockErrHandler)
-	assert.NotNil(t, stream)
-	doneC, stopC, err := stream.Start()
-	assert.NoError(t, err)
-	assert.NotNil(t, doneC)
-	assert.NotNil(t, stopC)
-	time.Sleep(timeOut)
-	doneC, stopC = stream.Stop()
-	assert.Nil(t, doneC)
-	assert.Nil(t, stopC)
-}

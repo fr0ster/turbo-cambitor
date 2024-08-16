@@ -13,52 +13,28 @@ type (
 		wsPath       web_api.WsPath
 		wsHandler    web_stream.WsHandler
 		wsErrHandler web_stream.ErrHandler
-		stream       *web_stream.WebStream
-		requestID    uint64
-		doneC        chan struct{}
-		stopC        chan struct{}
 	}
 )
-
-func (stream *Stream) createStream() (err error) {
-	if stream.stream == nil {
-		stream.stream, err = web_stream.New(
-			stream.wsHost,
-			stream.wsPath,
-			stream.wsHandler,
-			stream.wsErrHandler,
-			true,
-			60*time.Second)
-	}
-	return
-}
 
 func (stream *Stream) Start() (
 	doneC chan struct{},
 	stopC chan struct{},
 	err error) {
-	if stream.stopC != nil && stream.doneC != nil {
-		return stream.doneC, stream.stopC, nil
-	}
-	stream.createStream()
-	doneC, stopC, err = stream.stream.Start()
+	streamer, err := web_stream.New(
+		stream.wsHost,
+		stream.wsPath,
+		stream.wsHandler,
+		stream.wsErrHandler,
+		true,
+		60*time.Second)
 	if err != nil {
 		return
 	}
-	stream.doneC = doneC
-	stream.stopC = stopC
-	return
-}
-
-func (stream *Stream) Stop() (
-	doneC chan struct{},
-	stopC chan struct{}) {
-	if stream.stream != nil {
-		close(stream.stopC)
-		stream.stopC = nil
-		stream.doneC = nil
+	doneC, stopC, err = streamer.Start()
+	if err != nil {
+		return
 	}
-	return nil, nil
+	return
 }
 
 func (stream *Stream) SetHandler(
@@ -73,17 +49,11 @@ func (stream *Stream) SetErrHandler(
 	return stream
 }
 
-func (wa *Stream) Socket() *web_api.WebApi {
-	wa.createStream()
-	return wa.stream.Socket()
-}
-
 func New(
 	host web_api.WsHost,
 	path web_api.WsPath) *Stream {
 	return &Stream{
-		wsHost:    host,
-		wsPath:    path,
-		requestID: 0,
+		wsHost: host,
+		wsPath: path,
 	}
 }
