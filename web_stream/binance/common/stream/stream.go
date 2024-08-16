@@ -1,10 +1,8 @@
 package streamer
 
 import (
-	"sync/atomic"
 	"time"
 
-	"github.com/bitly/go-simplejson"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 	web_stream "github.com/fr0ster/turbo-restler/web_stream"
 )
@@ -17,6 +15,8 @@ type (
 		wsErrHandler web_stream.ErrHandler
 		stream       *web_stream.WebStream
 		requestID    uint64
+		doneC        chan struct{}
+		stopC        chan struct{}
 	}
 )
 
@@ -37,12 +37,28 @@ func (stream *Stream) Start() (
 	doneC chan struct{},
 	stopC chan struct{},
 	err error) {
+	if stream.stopC != nil && stream.doneC != nil {
+		return stream.doneC, stream.stopC, nil
+	}
 	stream.createStream()
 	doneC, stopC, err = stream.stream.Start()
 	if err != nil {
 		return
 	}
+	stream.doneC = doneC
+	stream.stopC = stopC
 	return
+}
+
+func (stream *Stream) Stop() (
+	doneC chan struct{},
+	stopC chan struct{}) {
+	if stream.stream != nil {
+		close(stream.stopC)
+		stream.stopC = nil
+		stream.doneC = nil
+	}
+	return nil, nil
 }
 
 func (stream *Stream) SetHandler(
@@ -57,36 +73,9 @@ func (stream *Stream) SetErrHandler(
 	return stream
 }
 
-func (wa *Stream) Subscribe(streams []string) (response *simplejson.Json, err error) {
-	wa.wsPath = web_api.WsPath("")
+func (wa *Stream) Socket() *web_api.WebApi {
 	wa.createStream()
-	socket := wa.stream.Socket()
-	rq := simplejson.New()
-	rq.Set("method", "SUBSCRIBE")
-	rq.Set("id", atomic.AddUint64(&wa.requestID, 1))
-	rq.Set("params", streams)
-	return socket.Call(rq)
-}
-
-func (wa *Stream) ListOfSubscriptions() (response *simplejson.Json, err error) {
-	wa.wsPath = web_api.WsPath("")
-	wa.createStream()
-	socket := wa.stream.Socket()
-	rq := simplejson.New()
-	rq.Set("method", "LIST_SUBSCRIPTIONS")
-	rq.Set("id", atomic.AddUint64(&wa.requestID, 1))
-	return socket.Call(rq)
-}
-
-func (wa *Stream) Unsubscribe(streams []string) (response *simplejson.Json, err error) {
-	wa.wsPath = web_api.WsPath("")
-	wa.createStream()
-	socket := wa.stream.Socket()
-	rq := simplejson.New()
-	rq.Set("method", "UNSUBSCRIBE")
-	rq.Set("id", atomic.AddUint64(&wa.requestID, 1))
-	rq.Set("params", streams)
-	return socket.Call(rq)
+	return wa.stream.Socket()
 }
 
 func New(

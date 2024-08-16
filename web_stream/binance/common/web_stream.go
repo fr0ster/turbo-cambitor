@@ -123,10 +123,6 @@ func (wa *WebStream) Symbol(symbol string) *WebStream {
 	return wa
 }
 
-func (wa *WebStream) DynamicStream() *stream.Stream {
-	return stream.New(wa.waHost, "")
-}
-
 func New(host web_api.WsHost) *WebStream {
 	return &WebStream{
 		waHost: host,

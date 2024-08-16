@@ -1,6 +1,18 @@
 # Release Notes for Turbo-Cambitor
 
-# Release Notes for Turbo-Cambitor
+## v0.2.8
+
+### Release Date: 2024-08-16
+
+### Changes
+- **Turbo-cambitor**:
+  - Removed implementations of the following functions:
+    - `Subscribe([]string) (response *simplejson.Json, err error)`
+    - `ListOfSubscriptions() (response *simplejson.Json, err error)`
+    - `Unsubscribe([]string) (response *simplejson.Json, err error)`
+  - These functions are now under redevelopment and will be reintroduced in a future release.
+
+---
 
 ## v0.2.7
 
