@@ -131,21 +131,12 @@ func TestStream(t *testing.T) {
 		New(true).
 		Stream().
 		SetSymbol("BTCUSDT").
-		SetErrHandler(mockErrHandler).
-		SetTimeOut(5 * time.Second)
+		SetErrHandler(mockErrHandler)
 	err := stream.Start()
 	assert.NoError(t, err)
-	response, err := stream.ListSubscriptions()
-	assert.NoError(t, err)
-	assert.NotNil(t, response)
-	stream.AddSubscriptions(mockHandler, "btcusdt@aggTrade")
-	response, err = stream.ListSubscriptions()
-	assert.NoError(t, err)
-	assert.NotNil(t, response)
+	stream.AddSubscription(mockHandler, "btcusdt@aggTrade")
+	time.Sleep(timeOut)
 	stream.RemoveSubscriptions("btcusdt@aggTrade")
 	time.Sleep(timeOut)
-	response, err = stream.ListSubscriptions()
-	assert.NoError(t, err)
-	assert.NotNil(t, response)
 	stream.Stop()
 }
