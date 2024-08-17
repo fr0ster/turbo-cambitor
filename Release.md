@@ -1,5 +1,16 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.22
+
+### Release Date: 2024-08-17
+
+### Changes
+- **Turbo-Cambitor**:
+  - **Refactor**: WebSocket connection handling in Binance stream for improved reliability and performance.
+    - This commit refactors the WebSocket connection handling in the Binance stream module. The changes aim to enhance the reliability and performance of the WebSocket connections, ensuring more stable and efficient data streaming.
+
+---
+
 ## v0.2.21
 
 ### Release Date: 2024-08-17
