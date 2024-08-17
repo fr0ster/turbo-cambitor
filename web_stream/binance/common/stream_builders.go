@@ -3,7 +3,6 @@ package common_web_stream
 import (
 	"strconv"
 	"strings"
-	"sync"
 
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 
@@ -120,11 +119,4 @@ func (wa *WebStream) ContractInfo() *stream.Stream {
 
 func (wa *WebStream) Stream() *stream.Stream {
 	return stream.New(wa.waHost, "")
-}
-
-func New(host web_api.WsHost) *WebStream {
-	return &WebStream{
-		waHost: host,
-		mutex:  &sync.Mutex{},
-	}
 }

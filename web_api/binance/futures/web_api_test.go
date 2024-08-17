@@ -47,6 +47,22 @@ func TestAccountInformationV2(t *testing.T) {
 	assert.NotNil(t, result)
 }
 
+// Test 5: Account Positions
+func TestAccountPositions(t *testing.T) {
+	wa := web_api.New(sign, true)
+	result, err := wa.AccountPositions().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
+}
+
+// Test 6: Account Positions V2
+func TestAccountPositionsV2(t *testing.T) {
+	wa := web_api.New(sign, true)
+	result, err := wa.AccountPositionsV2().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.Nil(t, err)
+	assert.NotNil(t, result)
+}
+
 // Test 9: Logon
 func TestLogon(t *testing.T) {
 	wa := web_api.New(sign, true)

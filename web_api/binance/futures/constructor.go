@@ -13,6 +13,8 @@ type WebApi interface {
 	AccountBalanceV2() *request.Request
 	AccountInformation() *request.Request
 	AccountInformationV2() *request.Request
+	AccountPositionsV2() *request.Request
+	AccountPositions() *request.Request
 	CancelOrder() *request.Request
 	ModifyOrder() *request.Request
 	Logon() *request.Request
@@ -27,6 +29,10 @@ type WebApi interface {
 	SymbolBookTicker() *request.Request
 	SymbolPriceTicker() *request.Request
 	Time() *request.Request
+
+	UserDataStreamStart() (listenKey string, err error)
+	UserDataStreamPing(listenKey string) (newListenKey string, err error)
+	UserDataStreamStop(listenKey string) (err error)
 }
 
 func New(sign signature.Sign, useTestNet ...bool) WebApi {
