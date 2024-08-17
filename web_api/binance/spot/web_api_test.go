@@ -180,3 +180,16 @@ func TestTime(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
+
+// Test 23: User Data Stream
+func TestUserDataStream(t *testing.T) {
+	wa := web_api.New(sign, true)
+	listenKey, err := wa.UserDataStreamStart()
+	assert.Nil(t, err)
+	assert.NotNil(t, listenKey)
+	newListenKey, err := wa.UserDataStreamPing(listenKey)
+	assert.Nil(t, err)
+	assert.NotNil(t, newListenKey)
+	err = wa.UserDataStreamStop(newListenKey)
+	assert.Nil(t, err)
+}

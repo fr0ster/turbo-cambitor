@@ -25,6 +25,10 @@ type WebApi interface {
 	SymbolBookTicker() *request.Request
 	SymbolPriceTicker() *request.Request
 	Time() *request.Request
+
+	UserDataStreamStart() (listenKey string, err error)
+	UserDataStreamPing(listenKey string) (newListenKey string, err error)
+	UserDataStreamStop(listenKey string) (err error)
 }
 
 func New(sign signature.Sign, useTestNet ...bool) WebApi {
