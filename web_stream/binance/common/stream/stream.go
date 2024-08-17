@@ -9,12 +9,10 @@ import (
 
 type (
 	Stream struct {
-		symbol       string
-		wsHost       web_api.WsHost
-		wsPath       web_api.WsPath
-		wsHandler    web_stream.WsHandler
-		wsErrHandler web_stream.ErrHandler
-		low_stream   *web_stream.WebStream
+		symbol     string
+		wsHost     web_api.WsHost
+		wsPath     web_api.WsPath
+		low_stream *web_stream.WebStream
 	}
 )
 
@@ -31,12 +29,12 @@ func (stream *Stream) Close() {
 }
 
 func (stream *Stream) SetHandler(handler web_stream.WsHandler) *Stream {
-	stream.wsHandler = handler
+	stream.low_stream.SetDefaultHandler(handler)
 	return stream
 }
 
 func (stream *Stream) SetErrHandler(errHandler web_stream.ErrHandler) *Stream {
-	stream.wsErrHandler = errHandler
+	stream.low_stream.SetErrHandler(errHandler)
 	return stream
 }
 
