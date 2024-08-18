@@ -1,5 +1,17 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.25
+
+### Release Date: 2024-08-18
+
+### Changes
+- **Turbo-Cambitor**:
+  - **Update**: Upgraded to `turbo-restler` v0.2.17.
+  - **WebStream**:
+    - Added `Lock` and `Unlock` functions.
+
+---
+
 ## v0.2.24
 
 ### Release Date: 2024-08-18
