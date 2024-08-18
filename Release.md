@@ -1,5 +1,15 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.24
+
+### Release Date: 2024-08-18
+
+### Changes
+- **Turbo-Cambitor**:
+  - **Update**: Added `Lock` and `Unlock` functions to the `futures.WebApi` and `spot.WebApi` interfaces.
+
+---
+
 ## v0.2.23
 
 ### Release Date: 2024-08-18

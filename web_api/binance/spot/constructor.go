@@ -32,6 +32,9 @@ type WebApi interface {
 	UserDataStreamStop() *request.Request
 
 	Call(*simplejson.Json) (*simplejson.Json, error)
+
+	Lock()
+	Unlock()
 }
 
 func New(sign signature.Sign, useTestNet ...bool) WebApi {
