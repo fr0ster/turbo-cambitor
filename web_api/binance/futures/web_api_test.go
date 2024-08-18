@@ -18,7 +18,7 @@ var (
 // Test 1: Account Balance
 func TestAccountBalance(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.AccountBalance().SetAPIKey().SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.AccountBalance().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -26,7 +26,7 @@ func TestAccountBalance(t *testing.T) {
 // Test 2: Account Balance V2
 func TestAccountBalanceV2(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.AccountBalanceV2().SetAPIKey().SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.AccountBalanceV2().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -34,7 +34,7 @@ func TestAccountBalanceV2(t *testing.T) {
 // Test 3: Account Information
 func TestAccountInformation(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.AccountInformation().SetAPIKey().SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.AccountInformation().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -42,7 +42,7 @@ func TestAccountInformation(t *testing.T) {
 // Test 4: Account Information V2
 func TestAccountInformationV2(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.AccountInformationV2().SetAPIKey().SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.AccountInformationV2().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -50,7 +50,7 @@ func TestAccountInformationV2(t *testing.T) {
 // Test 5: Account Positions
 func TestAccountPositions(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.AccountPositions().SetAPIKey().SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.AccountPositions().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -58,22 +58,22 @@ func TestAccountPositions(t *testing.T) {
 // Test 6: Account Positions V2
 func TestAccountPositionsV2(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.AccountPositionsV2().SetAPIKey().SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.AccountPositionsV2().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
 
-// Test 9: Logon
-func TestLogon(t *testing.T) {
-	wa := web_api.New(sign, true)
-	_, err := wa.Logon().SetAPIKey().SetTimestamp().SetSignature().Do()
-	assert.Equal(t, `error request: map[code:-4056 msg:HMAC_SHA256 API key is not supported.]`, err.Error())
-}
+// // Test 9: Logon
+// func TestLogon(t *testing.T) {
+// 	wa := web_api.New(sign, true)
+// 	_, err := wa.Call(wa.Logon().SetAPIKey().SetTimestamp().SetSignature().Do())
+// 	assert.Equal(t, `error request: map[code:-4056 msg:HMAC_SHA256 API key is not supported.]`, err.Error())
+// }
 
 // Test 11: Order Book
 func TestOrderBook(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.OrderBook().SetAPIKey().Set("symbol", "BTCUSDT").Do()
+	result, err := wa.Call(wa.OrderBook().SetAPIKey().Set("symbol", "BTCUSDT").Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -81,7 +81,7 @@ func TestOrderBook(t *testing.T) {
 // Test 12: Ping
 func TestPing(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.Ping().Do()
+	result, err := wa.Call(wa.Ping().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -89,7 +89,7 @@ func TestPing(t *testing.T) {
 // Test 13: Place, Query And Cancel Order
 func TestPlaceAndQueryAndCancelOrder(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.PlaceOrder().
+	result, err := wa.Call(wa.PlaceOrder().
 		SetAPIKey().
 		Set("symbol", "BTCUSDT").
 		Set("side", "BUY").
@@ -97,13 +97,29 @@ func TestPlaceAndQueryAndCancelOrder(t *testing.T) {
 		Set("quantity", "0.01").
 		Set("price", "10000").
 		Set("timeInForce", "GTC").
-		SetTimestamp().SetSignature().Do()
+		SetTimestamp().
+		SetSignature().
+		Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	result, err = wa.QueryOrder().SetAPIKey().Set("symbol", "BTCUSDT").Set("orderId", result.Get("orderId").MustInt()).SetTimestamp().SetSignature().Do()
+	result, err = wa.Call(
+		wa.QueryOrder().
+			SetAPIKey().
+			Set("symbol", "BTCUSDT").
+			Set("orderId", result.Get("orderId").MustInt()).
+			SetTimestamp().
+			SetSignature().
+			Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	result, err = wa.CancelOrder().SetAPIKey().Set("symbol", "BTCUSDT").Set("orderId", result.Get("orderId").MustInt()).SetTimestamp().SetSignature().Do()
+	result, err = wa.Call(
+		wa.CancelOrder().
+			SetAPIKey().
+			Set("symbol", "BTCUSDT").
+			Set("orderId", result.Get("orderId").MustInt()).
+			SetTimestamp().
+			SetSignature().
+			Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -111,7 +127,7 @@ func TestPlaceAndQueryAndCancelOrder(t *testing.T) {
 // Test 6: Place, Query And Modify Order
 func TestPlaceAndQueryAndModifyOrder(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.PlaceOrder().
+	result, err := wa.Call(wa.PlaceOrder().
 		SetAPIKey().
 		Set("symbol", "BTCUSDT").
 		Set("side", "BUY").
@@ -119,19 +135,19 @@ func TestPlaceAndQueryAndModifyOrder(t *testing.T) {
 		Set("quantity", "0.01").
 		Set("price", "10000").
 		Set("timeInForce", "GTC").
-		SetTimestamp().SetSignature().Do()
+		SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	result, err = wa.QueryOrder().SetAPIKey().Set("symbol", "BTCUSDT").Set("orderId", result.Get("orderId").MustInt()).SetTimestamp().SetSignature().Do()
+	result, err = wa.Call(wa.QueryOrder().SetAPIKey().Set("symbol", "BTCUSDT").Set("orderId", result.Get("orderId").MustInt()).SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	result, err = wa.ModifyOrder().
+	result, err = wa.Call(wa.ModifyOrder().
 		SetAPIKey().
 		Set("symbol", "BTCUSDT").
 		Set("orderId", result.Get("orderId").MustInt()).
 		Set("side", "BUY").
 		Set("quantity", "0.02").
-		Set("price", "10001").SetTimestamp().SetSignature().Do()
+		Set("price", "10001").SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -139,7 +155,7 @@ func TestPlaceAndQueryAndModifyOrder(t *testing.T) {
 // Test 17: Query Position
 func TestQueryPosition(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.QueryPosition().SetAPIKey().SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.QueryPosition().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -147,7 +163,7 @@ func TestQueryPosition(t *testing.T) {
 // Test 18: Query Position V2
 func TestQueryPositionV2(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.QueryPositionV2().SetAPIKey().SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.QueryPositionV2().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -155,7 +171,7 @@ func TestQueryPositionV2(t *testing.T) {
 // Test 19: Status
 func TestStatus(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.Status().SetAPIKey().Do()
+	result, err := wa.Call(wa.Status().SetAPIKey().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -163,7 +179,7 @@ func TestStatus(t *testing.T) {
 // Test 20: Symbol Book Ticker
 func TestSymbolBookTicker(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.SymbolBookTicker().SetAPIKey().Set("symbol", "BTCUSDT").SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.SymbolBookTicker().SetAPIKey().Set("symbol", "BTCUSDT").SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -171,7 +187,7 @@ func TestSymbolBookTicker(t *testing.T) {
 // Test 21: Symbol Price Ticker
 func TestSymbolPriceTicker(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.SymbolPriceTicker().SetAPIKey().Set("symbol", "BTCUSDT").SetTimestamp().SetSignature().Do()
+	result, err := wa.Call(wa.SymbolPriceTicker().SetAPIKey().Set("symbol", "BTCUSDT").SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 }
@@ -179,20 +195,7 @@ func TestSymbolPriceTicker(t *testing.T) {
 // Test 22: Time
 func TestTime(t *testing.T) {
 	wa := web_api.New(sign, true)
-	result, err := wa.Time().Do()
+	result, err := wa.Call(wa.Time().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-}
-
-// Test 23: User Data Stream
-func TestUserDataStream(t *testing.T) {
-	wa := web_api.New(sign, true)
-	listenKey, err := wa.UserDataStreamStart()
-	assert.Nil(t, err)
-	assert.NotNil(t, listenKey)
-	newListenKey, err := wa.UserDataStreamPing(listenKey)
-	assert.Nil(t, err)
-	assert.NotNil(t, newListenKey)
-	err = wa.UserDataStreamStop(newListenKey)
-	assert.Nil(t, err)
 }

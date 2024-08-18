@@ -1,10 +1,11 @@
 package spot_web_api
 
 import (
-	common "github.com/fr0ster/turbo-cambitor/web_api/binance/common"
+	"github.com/bitly/go-simplejson"
 	request "github.com/fr0ster/turbo-cambitor/web_api/binance/common/request"
+	web_api "github.com/fr0ster/turbo-cambitor/web_api/binance/common/web_api"
 
-	web_api "github.com/fr0ster/turbo-restler/web_api"
+	"github.com/fr0ster/turbo-restler/web_socket"
 	signature "github.com/fr0ster/turbo-signer/signature"
 )
 
@@ -26,9 +27,11 @@ type WebApi interface {
 	SymbolPriceTicker() *request.Request
 	Time() *request.Request
 
-	UserDataStreamStart() (listenKey string, err error)
-	UserDataStreamPing(listenKey string) (newListenKey string, err error)
-	UserDataStreamStop(listenKey string) (err error)
+	UserDataStreamStart() *request.Request
+	UserDataStreamPing() *request.Request
+	UserDataStreamStop() *request.Request
+
+	Call(*simplejson.Json) (*simplejson.Json, error)
 }
 
 func New(sign signature.Sign, useTestNet ...bool) WebApi {
@@ -46,5 +49,5 @@ func New(sign signature.Sign, useTestNet ...bool) WebApi {
 		waHost = "ws-api.binance.com:443"
 		waPath = "/ws-api/v3"
 	}
-	return common.New(web_api.WsHost(waHost), web_api.WsPath(waPath), sign)
+	return web_api.New(web_socket.WsHost(waHost), web_socket.WsPath(waPath), sign)
 }

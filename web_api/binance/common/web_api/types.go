@@ -2,10 +2,11 @@ package common_web_api
 
 import (
 	"sync"
+	"time"
 
 	"github.com/bitly/go-simplejson"
 
-	web_api "github.com/fr0ster/turbo-restler/web_api"
+	"github.com/fr0ster/turbo-restler/web_socket"
 	signature "github.com/fr0ster/turbo-signer/signature"
 )
 
@@ -21,11 +22,15 @@ const (
 
 type (
 	DepthAPILimit int
-	WebApi        struct {
-		waHost web_api.WsHost
-		waPath web_api.WsPath
-		mutex  *sync.Mutex
-		sign   signature.Sign
+	WebApiWrapper struct {
+		waHost        web_socket.WsHost
+		waPath        web_socket.WsPath
+		mutex         *sync.Mutex
+		sign          signature.Sign
+		connection    *web_socket.WebSocketWrapper
+		isLoopStarted bool
+		wsHandlerMap  web_socket.WsHandlerMap
+		timeOut       time.Duration
 	}
 	Result struct {
 		APIKey           string `json:"apiKey"`

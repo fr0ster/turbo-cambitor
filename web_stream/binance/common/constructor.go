@@ -3,10 +3,10 @@ package common_web_stream
 import (
 	"sync"
 
-	web_api "github.com/fr0ster/turbo-restler/web_api"
+	"github.com/fr0ster/turbo-restler/web_socket"
 )
 
-func New(host web_api.WsHost) *WebStream {
+func New(host web_socket.WsHost) *WebStream {
 	return &WebStream{
 		waHost: host,
 		mutex:  &sync.Mutex{},

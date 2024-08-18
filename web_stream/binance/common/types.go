@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	web_api "github.com/fr0ster/turbo-restler/web_api"
+	"github.com/fr0ster/turbo-restler/web_socket"
 )
 
 const (
@@ -21,7 +21,7 @@ type (
 	DepthStreamRate  time.Duration
 	WebStream        struct {
 		symbol string
-		waHost web_api.WsHost
+		waHost web_socket.WsHost
 		mutex  *sync.Mutex
 	}
 )

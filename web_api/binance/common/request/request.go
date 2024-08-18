@@ -1,12 +1,11 @@
 package request
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/bitly/go-simplejson"
 
-	web_api "github.com/fr0ster/turbo-restler/web_api"
+	"github.com/fr0ster/turbo-restler/web_socket"
 	signature "github.com/fr0ster/turbo-signer/signature"
 	"github.com/google/uuid"
 )
@@ -14,12 +13,12 @@ import (
 type (
 	Method  string
 	Request struct {
-		sign       signature.Sign
-		waHost     web_api.WsHost
-		waPath     web_api.WsPath
-		method     Method
-		params     *simplejson.Json
-		connection *web_api.WebApi
+		sign   signature.Sign
+		waHost web_socket.WsHost
+		waPath web_socket.WsPath
+		method Method
+		params *simplejson.Json
+		// connection *web_api.WebApi
 	}
 )
 
@@ -55,47 +54,22 @@ func (rq *Request) SetSignature() *Request {
 	return rq
 }
 
-func (rq *Request) SetPingHandler(handler ...func(appData string) error) *Request {
-	rq.connection.SetPingHandler(handler...)
-	return rq
-}
-
-func (rq *Request) Do() (result *simplejson.Json, err error) {
-	request := simplejson.New()
-	request.Set("id", uuid.New().String())
-	request.Set("method", rq.method)
+func (rq *Request) Do() (result *simplejson.Json) {
+	result = simplejson.New()
+	result.Set("id", uuid.New().String())
+	result.Set("method", rq.method)
 	if rq.params != nil {
-		request.Set("params", rq.params)
+		result.Set("params", rq.params)
 	}
-	response, err := rq.connection.Call(request)
-	if err != nil {
-		return
-	}
-
-	if response.Get("status").MustInt() != 200 {
-		err = fmt.Errorf("error request: %v", response.Get("error").Interface())
-		return
-	}
-
-	bytes, err := response.Get("result").MarshalJSON()
-	if err != nil {
-		return
-	}
-	result, err = simplejson.NewJson(bytes)
 	return
 }
 
-func New(method Method, waHost web_api.WsHost, waPath web_api.WsPath, sign signature.Sign) *Request {
-	wa, err := web_api.New(waHost, waPath)
-	if err != nil {
-		return nil
-	}
+func New(method Method, waHost web_socket.WsHost, waPath web_socket.WsPath, sign signature.Sign) *Request {
 	return &Request{
-		sign:       sign,
-		waHost:     waHost,
-		waPath:     waPath,
-		params:     nil,
-		method:     method,
-		connection: wa,
+		sign:   sign,
+		waHost: waHost,
+		waPath: waPath,
+		params: nil,
+		method: method,
 	}
 }

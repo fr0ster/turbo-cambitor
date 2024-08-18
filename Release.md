@@ -1,5 +1,18 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.23
+
+### Release Date: 2024-08-18
+
+### Changes
+- **Turbo-Cambitor**:
+  - **Update**: Upgraded to `turbo-restler` v0.2.16.
+  - **Refactor**:
+    - Moved the `Do` method from `Request` to `WebApi` and renamed `WebApi` to `WebApiWrapper`.
+    - Renamed `Stream` to `StreamWrapper`.
+
+---
+
 ## v0.2.22
 
 ### Release Date: 2024-08-18

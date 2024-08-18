@@ -1,32 +1,34 @@
 package streamer
 
 import (
-	web_api "github.com/fr0ster/turbo-restler/web_api"
-	web_stream "github.com/fr0ster/turbo-restler/web_stream"
+	"time"
+
+	"github.com/fr0ster/turbo-restler/web_socket"
 	"github.com/sirupsen/logrus"
 )
 
-func (stream *Stream) SetSymbol(symbol string) *Stream {
+func (stream *StreamWrapper) SetSymbol(symbol string) *StreamWrapper {
 	stream.symbol = symbol
 	return stream
 }
 
+func (stream *StreamWrapper) SetTimeOut(timeout time.Duration) *StreamWrapper {
+	stream.timeOut = timeout
+	return stream
+}
+
 func New(
-	host web_api.WsHost,
-	path web_api.WsPath,
-	scheme ...web_api.WsScheme) *Stream {
-	stream, err := web_stream.New(host, path, scheme...)
+	host web_socket.WsHost,
+	path web_socket.WsPath,
+	scheme ...web_socket.WsScheme) *StreamWrapper {
+	stream, err := web_socket.New(host, path, scheme...)
 	if err != nil {
 		logrus.Fatalf("Error: %v", err)
 	}
-	wa, err := web_api.New(host, path)
-	if err != nil {
-		panic(err)
-	}
-	return &Stream{
-		maintainWebApi: wa,
-		wsHost:         host,
-		wsPath:         path,
-		low_stream:     stream,
+	return &StreamWrapper{
+		wsHost:     host,
+		wsPath:     path,
+		low_stream: stream,
+		timeOut:    10 * time.Second,
 	}
 }
