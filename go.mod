@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/bitly/go-simplejson v0.5.1
-	github.com/fr0ster/turbo-restler v0.2.16
+	github.com/fr0ster/turbo-restler v0.2.17
 	github.com/google/uuid v1.6.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0

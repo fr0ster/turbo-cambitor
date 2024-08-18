@@ -22,6 +22,9 @@ type WebStream interface {
 	LiquidationOrder() *stream.StreamWrapper
 	ContractInfo() *stream.StreamWrapper
 	Stream() *stream.StreamWrapper
+
+	Lock()
+	Unlock()
 }
 
 func New(useTestNet ...bool) WebStream {
