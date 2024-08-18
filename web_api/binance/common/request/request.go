@@ -55,6 +55,11 @@ func (rq *Request) SetSignature() *Request {
 	return rq
 }
 
+func (rq *Request) SetPingHandler(handler ...func(appData string) error) *Request {
+	rq.connection.SetPingHandler(handler...)
+	return rq
+}
+
 func (rq *Request) Do() (result *simplejson.Json, err error) {
 	request := simplejson.New()
 	request.Set("id", uuid.New().String())

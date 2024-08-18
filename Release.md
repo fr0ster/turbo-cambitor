@@ -2,6 +2,18 @@
 
 ## v0.2.22
 
+### Release Date: 2024-08-18
+
+### Changes
+- **Turbo-Cambitor**:
+  - **Refactor**: WebSocket connection handling in Binance stream for improved reliability and performance.
+    - This commit refactors the WebSocket connection handling in the Binance stream module. The changes aim to enhance the reliability and performance of the WebSocket connections, ensuring more stable and efficient data streaming.
+  - **Update**: Updated `fr0ster/turbo-restler` dependency to v0.2.13.
+
+---
+
+## v0.2.22
+
 ### Release Date: 2024-08-17
 
 ### Changes
