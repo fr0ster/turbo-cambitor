@@ -5,6 +5,10 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fr0ster/turbo-restler v0.0.0-20240819170916-1766c0be1ab6 h1:dR0mVD28ndf8QYhoChIGSsIxxtMU8yyp9JmFwDdH+9w=
 github.com/fr0ster/turbo-restler v0.0.0-20240819170916-1766c0be1ab6/go.mod h1:QcjQ15+6trMJOkdW3PqRrLtIl8y1H6gaQkaPmFjLNr0=
+github.com/fr0ster/turbo-restler v0.0.0-20240819172804-b4f70fcfe3c0 h1:VGEm+mzeImIJgcXA748TzsiWdT9wNc700TuEUC4kxLk=
+github.com/fr0ster/turbo-restler v0.0.0-20240819172804-b4f70fcfe3c0/go.mod h1:QcjQ15+6trMJOkdW3PqRrLtIl8y1H6gaQkaPmFjLNr0=
+github.com/fr0ster/turbo-restler v0.0.0-20240819172948-9cff5e2908d0 h1:mQ51rK6CpLawzUFyksAcpN9QkeL66wYnL8E4mhDEBto=
+github.com/fr0ster/turbo-restler v0.0.0-20240819172948-9cff5e2908d0/go.mod h1:QcjQ15+6trMJOkdW3PqRrLtIl8y1H6gaQkaPmFjLNr0=
 github.com/fr0ster/turbo-restler v0.2.1 h1:HDepR59afySEyr6rV2O6fsO4/NyaYt3bxR+wAOT94kg=
 github.com/fr0ster/turbo-restler v0.2.1/go.mod h1:VuZnL5MehMXw+Mupxtip5v1DyKmbKKCd+T1Yi/R+nDc=
 github.com/fr0ster/turbo-restler v0.2.2 h1:jpK9doW+GMz6MY3pzR65j/8W/vJFBAYwdhNv5GLhkG0=
