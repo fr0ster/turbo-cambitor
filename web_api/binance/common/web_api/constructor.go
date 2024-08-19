@@ -1,7 +1,6 @@
 package common_web_api
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -29,29 +28,18 @@ func (wa *WebApiWrapper) SetTimeOut(d time.Duration) *WebApiWrapper {
 }
 
 func (wa *WebApiWrapper) Call(rq *simplejson.Json) (result *simplejson.Json, err error) {
-	resultC := make(chan *simplejson.Json)
-	wa.connection.AddHandler(rq.Get("id").MustString(), func(data *simplejson.Json) {
-		if data.Get("id").MustString() == rq.Get("id").MustString() {
-			resultC <- data
-		}
-	})
-	wa.connection.Start()
-	wa.connection.Send(rq)
-	var ok bool
-	select {
-	case <-time.After(wa.timeOut):
-		err = fmt.Errorf("timeout")
-	case result, ok = <-resultC:
-		if !ok {
-			err = fmt.Errorf("error")
-		}
+	wa.Lock()
+	defer wa.Unlock()
+	err = wa.connection.Send(rq)
+	if err != nil {
+		return
 	}
-	wa.connection.Stop()
+	result, err = wa.connection.Read()
 	return
 }
 
 func New(host web_socket.WsHost, path web_socket.WsPath, sign signature.Sign) *WebApiWrapper {
-	wa, err := web_socket.New(host, path)
+	wa, err := web_socket.New(host, path, web_socket.SchemeWSS)
 	if err != nil {
 		return nil
 	}

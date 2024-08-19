@@ -32,106 +32,82 @@ func mockErrHandler(err error) {
 	logrus.Errorf("Error: %v", err)
 }
 
-func TestStartBinanceStreamer(t *testing.T) {
-	// Test 2: Binance stream
-	stream := web_stream.New(true)
-	assert.NotNil(t, stream)
-
-	streamer :=
-		stream.Klines("1m").SetSymbol("BTCUSDT").
-			AddHandler(
-				"default",
-				func(message *simplejson.Json) {
-					mockHandler(message)
-				}).
-			SetErrHandler(
-				func(err error) {
-					mockErrHandler(err)
-				})
-	err := streamer.Start()
-	assert.NoError(t, err)
-
-	// Stop the streamer after some time
-	time.Sleep(timeOut)
-	streamer.Stop()
-}
-
 func TestKlines(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.Klines("1m").SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.Klines("1m").SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestContinuousKlines(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.ContinuousKlines("1m", "BTCUSDT").SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.ContinuousKlines("1m", "BTCUSDT").SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestPartialBookDepths(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.PartialBookDepths(common.DepthStreamLevel5, common.DepthStreamRate100ms).SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.PartialBookDepths(common.DepthStreamLevel5, common.DepthStreamRate100ms).SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestDiffBookDepths(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.DiffBookDepths(common.DepthStreamRate100ms).SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.DiffBookDepths(common.DepthStreamRate100ms).SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestAggTrades(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.AggTrades().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.AggTrades().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestTrades(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.Trades().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.Trades().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestBookTickers(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.BookTickers().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.BookTickers().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestTickers(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.Tickers().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.Tickers().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestMiniTickers(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.MiniTickers().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.MiniTickers().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestUserData(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.UserData("listenKey").SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.UserData("listenKey").SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestMarkPrice(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.MarkPrice().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.MarkPrice().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestLiquidationOrder(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.LiquidationOrder().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.LiquidationOrder().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestContractInfo(t *testing.T) {
 	stream := web_stream.New(true)
-	err := stream.ContractInfo().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler).Start()
-	assert.NoError(t, err)
+	wrapper := stream.ContractInfo().SetSymbol("BTCUSDT").AddHandler("default", mockHandler).SetErrHandler(mockErrHandler)
+	assert.NotNil(t, wrapper)
 }
 
 func TestStream(t *testing.T) {
@@ -140,14 +116,13 @@ func TestStream(t *testing.T) {
 		Stream().
 		SetSymbol("BTCUSDT").
 		SetErrHandler(mockErrHandler)
-	err := stream.Start()
-	assert.NoError(t, err)
 	stream.AddHandler("btcusdt@aggTrade", genMockHandler("btcusdt@aggTrade"))
-	err = stream.Subscribe("btcusdt@aggTrade")
+	err := stream.Subscribe("btcusdt@aggTrade")
 	assert.NoError(t, err)
+	subscribes, err := stream.ListOfSubscriptions()
+	assert.NoError(t, err)
+	assert.NotNil(t, subscribes)
 	time.Sleep(timeOut)
 	stream.Unsubscribe("btcusdt@aggTrade")
 	stream.RemoveHandler("btcusdt@aggTrade")
-	time.Sleep(timeOut)
-	stream.Stop()
 }

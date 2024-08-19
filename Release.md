@@ -1,5 +1,19 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.26
+
+### Release Date: 2024-08-19
+
+### Changes
+- **Turbo-Cambitor**:
+  - **Update**: Upgraded to `turbo-restler` v0.2.18.
+  - **WebApi**:
+    - Retained only the synchronous `Call` method.
+  - **WebStream**:
+    - Utilized the asynchronous `Call` method.
+
+---
+
 ## v0.2.25
 
 ### Release Date: 2024-08-18

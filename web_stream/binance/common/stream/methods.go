@@ -10,14 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (stream *StreamWrapper) Start() (err error) {
-	return stream.low_stream.Start()
-}
-
-func (stream *StreamWrapper) Stop() {
-	stream.low_stream.Stop()
-}
-
 func (stream *StreamWrapper) Close() {
 	stream.low_stream.Close()
 }
@@ -47,7 +39,7 @@ func (ws *StreamWrapper) Subscribe(subscriptions ...string) (err error) {
 	rq.Set("method", "SUBSCRIBE")
 	rq.Set("id", uuid.New().String())
 	rq.Set("params", subscriptions)
-	response, err := ws.syncWebApiCall(rq)
+	response, err := ws.Call(rq)
 	if err != nil {
 		return
 	}
@@ -57,11 +49,11 @@ func (ws *StreamWrapper) Subscribe(subscriptions ...string) (err error) {
 	return
 }
 
-func (ws *StreamWrapper) ListOfSubscriptions(handler web_socket.WsHandler) (resultOut []string, err error) {
+func (ws *StreamWrapper) ListOfSubscriptions() (resultOut []string, err error) {
 	rq := simplejson.New()
 	rq.Set("method", "LIST_SUBSCRIPTIONS")
 	rq.Set("id", uuid.New().String())
-	response, err := ws.syncWebApiCall(rq)
+	response, err := ws.Call(rq)
 	result := response.Get("result").MustArray()
 	if len(result) == 0 && response.Get("id").MustString() != rq.Get("id").MustString() {
 		err = fmt.Errorf("something went wrong")
@@ -83,7 +75,7 @@ func (ws *StreamWrapper) Unsubscribe(subscriptions ...string) (err error) {
 	rq.Set("method", "UNSUBSCRIBE")
 	rq.Set("id", uuid.New().String())
 	rq.Set("params", subscriptions)
-	response, err := ws.syncWebApiCall(rq)
+	response, err := ws.Call(rq)
 	if err != nil {
 		return
 	}
@@ -93,7 +85,7 @@ func (ws *StreamWrapper) Unsubscribe(subscriptions ...string) (err error) {
 	return
 }
 
-func (ws *StreamWrapper) syncWebApiCall(rq *simplejson.Json) (responseOut *simplejson.Json, err error) {
+func (ws *StreamWrapper) Call(rq *simplejson.Json) (responseOut *simplejson.Json, err error) {
 	// Створюємо канал для отримання відповіді
 	resultC := make(chan *simplejson.Json, 1)
 

@@ -20,8 +20,9 @@ func (stream *StreamWrapper) SetTimeOut(timeout time.Duration) *StreamWrapper {
 func New(
 	host web_socket.WsHost,
 	path web_socket.WsPath,
-	scheme ...web_socket.WsScheme) *StreamWrapper {
-	stream, err := web_socket.New(host, path, scheme...)
+	scheme web_socket.WsScheme,
+	timeOut ...time.Duration) *StreamWrapper {
+	stream, err := web_socket.New(host, path, scheme, timeOut...)
 	if err != nil {
 		logrus.Fatalf("Error: %v", err)
 	}
