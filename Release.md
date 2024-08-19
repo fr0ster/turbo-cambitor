@@ -1,5 +1,15 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.27
+
+### Release Date: 2024-08-19
+
+### Changes
+- **Turbo-Cambitor**:
+  - **Update**: Upgraded to `turbo-restler` v0.2.19.
+
+---
+
 ## v0.2.26
 
 ### Release Date: 2024-08-19
