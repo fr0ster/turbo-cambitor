@@ -3,7 +3,7 @@ package spot_rest_api
 import (
 	"net/http"
 
-	rest_api "github.com/fr0ster/turbo-restler/rest_api"
+	request "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/request"
 )
 
 func (ra *RestApi) Lock() {
@@ -14,72 +14,72 @@ func (ra *RestApi) Unlock() {
 	ra.mutex.Unlock()
 }
 
-func (ra *RestApi) ExchangeInfo() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/exchangeInfo", ra.sign)
-	return
+func (ra *RestApi) ExchangeInfo() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/exchangeInfo", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) Ping() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/ping", ra.sign)
-	return
+func (ra *RestApi) Ping() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ping", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) OrderBook() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/depth", ra.sign)
-	return
+func (ra *RestApi) OrderBook(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/depth", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) RecentTrades() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/trades", ra.sign)
-	return
+func (ra *RestApi) RecentTrades(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/trades", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) OldTradesLookup() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/historicalTrades", ra.sign)
-	return
+func (ra *RestApi) OldTradesLookup(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/historicalTrades", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) AggregateTrades() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/aggTrades", ra.sign)
-	return
+func (ra *RestApi) AggregateTrades(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/aggTrades", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) Klines() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/klines", ra.sign)
-	return
+func (ra *RestApi) Klines(symbol string, interval string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/klines", nil, ra.sign)
+	return rq.Set("symbol", symbol).Set("interval", interval)
 }
 
-func (ra *RestApi) UIKlines() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/uiKlines", ra.sign)
-	return
+func (ra *RestApi) UIKlines(symbol string, interval string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/uiKlines", nil, ra.sign)
+	return rq.Set("symbol", symbol).Set("interval", interval)
 }
 
-func (ra *RestApi) CurrentAvgPrice() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/avgPrice", ra.sign)
-	return
+func (ra *RestApi) CurrentAvgPrice(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/avgPrice", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) Ticker24hr() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/ticker/24hr", ra.sign)
-	return
+func (ra *RestApi) Ticker24hr(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/24hr", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) TradingDay() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/ticker/tradingDay", ra.sign)
-	return
+func (ra *RestApi) TradingDay() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/tradingDay", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) TickerPrice() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/ticker/price", ra.sign)
-	return
+func (ra *RestApi) TickerPrice() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/price", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) TickerBookTicker() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/ticker/bookTicker", ra.sign)
-	return
+func (ra *RestApi) TickerBookTicker() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/bookTicker", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) TickerV3() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/api/v3/ticker", ra.sign)
-	return
+func (ra *RestApi) TickerV3() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/price", nil, ra.sign)
+	return rq
 }

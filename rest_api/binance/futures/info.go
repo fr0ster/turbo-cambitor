@@ -3,7 +3,7 @@ package futures_rest_api
 import (
 	"net/http"
 
-	rest_api "github.com/fr0ster/turbo-restler/rest_api"
+	request "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/request"
 )
 
 func (ra *RestApi) Lock() {
@@ -14,142 +14,97 @@ func (ra *RestApi) Unlock() {
 	ra.mutex.Unlock()
 }
 
-func (ra *RestApi) Ping() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/ping", ra.sign)
-	return
+func (ra *RestApi) Ping() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/ping", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) ExchangeInfo() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/exchangeInfo", ra.sign)
-	return
+func (ra *RestApi) ExchangeInfo() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/exchangeInfo", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) OrderBook() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/depth", ra.sign)
-	return
+func (ra *RestApi) OrderBook(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/depth", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) RecentTrades() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/trades", ra.sign)
-	return
+func (ra *RestApi) RecentTrades(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/trades", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) OldTradesLookup() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/historicalTrades", ra.sign)
-	return
+func (ra *RestApi) OldTradesLookup(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/historicalTrades", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) AggregateTrades() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/aggTrades", ra.sign)
-	return
+func (ra *RestApi) AggregateTrades(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/aggTrades", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) Klines() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/klines", ra.sign)
-	return
+func (ra *RestApi) Klines(symbol string, internal string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/klines", nil, ra.sign)
+	return rq.Set("symbol", symbol).Set("interval", internal)
 }
 
-func (ra *RestApi) ContinuousKlines() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/continuousKlines", ra.sign)
-	return
+func (ra *RestApi) ContinuousKlines(symbol string, interval string, contractType string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/continuousKlines", nil, ra.sign)
+	return rq.Set("pair", symbol).Set("interval", interval).Set("contractType", contractType)
 }
 
-func (ra *RestApi) IndexPriceKlines() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/indexPriceKlines", ra.sign)
-	return
+func (ra *RestApi) IndexPriceKlines(symbol string, interval string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/indexPriceKlines", nil, ra.sign)
+	return rq.Set("pair", symbol).Set("interval", interval)
 }
 
-func (ra *RestApi) MarkPriceKlines() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/markPriceKlines", ra.sign)
-	return
+func (ra *RestApi) MarkPriceKlines(symbol string, interval string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/markPriceKlines", nil, ra.sign)
+	return rq.Set("symbol", symbol).Set("interval", interval)
 }
 
-func (ra *RestApi) PremiumIndexKlines() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/premiumIndexKlines", ra.sign)
-	return
+func (ra *RestApi) FundingRate() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/fundingRate", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) MarkPrice() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/markPrice", ra.sign)
-	return
+func (ra *RestApi) FundingInfo() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/premiumIndex", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) FundingRate() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/fundingRate", ra.sign)
-	return
+func (ra *RestApi) Ticker24hr() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/ticker/24hr", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) FundingInfo() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/premiumIndex", ra.sign)
-	return
+func (ra *RestApi) TickerPrice() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/ticker/price", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) Ticker24hr() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/ticker/24hr", ra.sign)
-	return
+func (ra *RestApi) TickerPriceV2() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v2/ticker/price", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) TickerPrice() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/ticker/price", ra.sign)
-	return
+func (ra *RestApi) BookTicker() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/ticker/bookTicker", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) TickerPriceV2() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v2/ticker/price", ra.sign)
-	return
+func (ra *RestApi) OpenInterest(symbol string) *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/openInterest", nil, ra.sign)
+	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) BookTicker() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/ticker/bookTicker", ra.sign)
-	return
+func (ra *RestApi) CompositeIndexSymbol() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/indexInfo", nil, ra.sign)
+	return rq
 }
 
-func (ra *RestApi) QuarterlyContractSettlementPrice() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/futures/data/delivery-price", ra.sign)
-	return
-}
-
-func (ra *RestApi) OpenInterest() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/futures/data/openInterest", ra.sign)
-	return
-}
-
-func (ra *RestApi) OpenInterestHist() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/futures/data/openInterestHist", ra.sign)
-	return
-}
-
-func (ra *RestApi) TopLongShortPositionRatio() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/futures/data/topLongShortAccountRatio", ra.sign)
-	return
-}
-
-func (ra *RestApi) TopLongShortAccountRatio() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/futures/data/topLongShortPositionRatio", ra.sign)
-	return
-}
-
-func (ra *RestApi) GlobalLongShortAccountRatio() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/futures/data/globalLongShortAccountRatio", ra.sign)
-	return
-}
-
-func (ra *RestApi) TakerBuySellVolume() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/futures/data/takerlongshortRatio", ra.sign)
-	return
-}
-
-func (ra *RestApi) HistoricalBLVTNavCandlestick() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "//fapi/v1/lvtKlines", ra.sign)
-	return
-}
-
-func (ra *RestApi) CompositeIndexSymbol() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/indexInfo", ra.sign)
-	return
-}
-
-func (ra *RestApi) MultiAssetsModeAssetIndex() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/assetIndex", ra.sign)
-	return
+func (ra *RestApi) MultiAssetsModeAssetIndex() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/assetIndex", nil, ra.sign)
+	return rq
 }

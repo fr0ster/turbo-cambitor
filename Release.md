@@ -1,5 +1,18 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.29
+
+### Release Date: 2024-08-21
+
+### Chore
+- Upgraded to `turbo-restler` v0.2.26 and `turbo-signer` v0.1.6.
+
+### Fix
+- Fixed implementation of `RestAPI` functions.
+- Refactored code related to the change of parameter in `turbo_restler` `CallRestAPI` to `*http.Request`.
+
+---
+
 ## v0.2.28
 
 ### Release Date: 2024-08-19

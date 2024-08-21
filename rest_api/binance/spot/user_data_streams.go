@@ -1,28 +1,34 @@
 package spot_rest_api
 
 import (
-	"fmt"
 	"net/http"
 
-	rest_api "github.com/fr0ster/turbo-restler/rest_api"
+	"github.com/bitly/go-simplejson"
+	request "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/request"
 )
 
 func (ra *RestApi) ListenKey() (listenKey string, err error) {
-	response, err := rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodPost, nil, "/api/v3/userDataStream", ra.sign)
+	rq := request.New(http.MethodPost, ra.apiBaseUrl, "/api/v3/userDataStream", nil, ra.sign)
+	response, err := rq.Do()
 	if err != nil {
-		err = fmt.Errorf("error calling API: %v", err)
 		return
 	}
 	listenKey = response.Get("listenKey").MustString()
 	return
 }
 
-func (ra *RestApi) KeepAliveListenKey() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodPut, nil, "/api/v3/userDataStream", ra.sign)
+func (ra *RestApi) KeepAliveListenKey(listenKey string) (err error) {
+	params := simplejson.New()
+	params.Set("listenKey", listenKey)
+	rq := request.New(http.MethodPut, ra.apiBaseUrl, "/api/v3/userDataStream", params, ra.sign)
+	_, err = rq.Do()
 	return
 }
 
-func (ra *RestApi) CloseListenKey() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodDelete, nil, "/api/v3/userDataStream", ra.sign)
+func (ra *RestApi) CloseListenKey(listenKey string) (err error) {
+	params := simplejson.New()
+	params.Set("listenKey", listenKey)
+	rq := request.New(http.MethodDelete, ra.apiBaseUrl, "/api/v3/userDataStream", params, ra.sign)
+	_, err = rq.Do()
 	return
 }

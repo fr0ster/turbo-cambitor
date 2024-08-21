@@ -2,111 +2,91 @@ package futures_rest_api
 
 import (
 	"net/http"
+	"strconv"
 
-	rest_api "github.com/fr0ster/turbo-restler/rest_api"
+	"github.com/bitly/go-simplejson"
+	request "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/request"
 )
 
-func (ra *RestApi) AccountV3() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v3/account", ra.sign)
-	return
+func (ra *RestApi) AccountV3() *request.Request {
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v3/account", nil, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) Account() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v2/account", ra.sign)
-	return
+func (ra *RestApi) Account() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v2/account", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) BalanceV3() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v3/balance", ra.sign)
-	return
+func (ra *RestApi) BalanceV3() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v3/balance", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) Balance() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v2/balance", ra.sign)
-	return
+func (ra *RestApi) Balance() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v2/balance", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) UserCommissionRate() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/commissionRate", ra.sign)
-	return
+func (ra *RestApi) UserCommissionRate() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/commissionRate", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) AccountConfiguration() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/accountConfig", ra.sign)
-	return
+func (ra *RestApi) AccountConfiguration() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/accountConfig", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) SymbolConfiguration() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/symbolConfig", ra.sign)
-	return
+func (ra *RestApi) SymbolConfiguration() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/symbolConfig", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) ForceOrders() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/rateLimit/order", ra.sign)
-	return
+func (ra *RestApi) ForceOrders() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/rateLimit/order", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) NotionalLeverageBrackets() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/leverageBracket", ra.sign)
-	return
+func (ra *RestApi) NotionalLeverageBrackets() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/leverageBracket", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) MultiAssetsMargin() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/multiAssetsMargin", ra.sign)
-	return
+func (ra *RestApi) MultiAssetsMargin() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/multiAssetsMargin", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) PositionMode() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/positionSide/dual", ra.sign)
-	return
+func (ra *RestApi) PositionMode() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/positionSide/dual", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) Income() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/income", ra.sign)
-	return
+func (ra *RestApi) Income() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/income", params, ra.sign)
+	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) ApiTradingStatus() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/apiTradingStatus", ra.sign)
-	return
+func (ra *RestApi) ToggleBNBBurn(feeBurn bool) *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodPost, ra.apiBaseUrl, "/fapi/v1/feeBurn", params, ra.sign)
+	return rq.SetAPIKey().Set("feeBurn", strconv.FormatBool(feeBurn))
 }
 
-func (ra *RestApi) TransactionHistoryDownloadId() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/income/asyn", ra.sign)
-	return
-}
-
-func (ra *RestApi) TransactionHistoryDownloadLinkById() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/income/asyn/id", ra.sign)
-	return
-}
-
-func (ra *RestApi) OrderHistoryDownloadId() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/order/asyn", ra.sign)
-	return
-}
-
-func (ra *RestApi) OrderHistoryDownloadLinkById() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/order/asyn/id", ra.sign)
-	return
-}
-
-func (ra *RestApi) TradeHistoryDownloadId() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/trade/asyn", ra.sign)
-	return
-}
-
-func (ra *RestApi) TradeHistoryDownloadLinkById() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/trade/asyn/id", ra.sign)
-	return
-}
-
-func (ra *RestApi) ToggleBNBBurn() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodPost, nil, "/fapi/v1/feeBurn", ra.sign)
-	return
-}
-
-func (ra *RestApi) BNBBurnStatus() (err error) {
-	_, err = rest_api.CallRestAPI(ra.apiBaseUrl, http.MethodGet, nil, "/fapi/v1/feeBurn", ra.sign)
-	return
+func (ra *RestApi) BNBBurnStatus() *request.Request {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/feeBurn", params, ra.sign)
+	return rq.SetAPIKey()
 }
