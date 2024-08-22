@@ -1,5 +1,14 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.30
+
+### Release Date: 2024-08-22
+
+### Chore
+- Removed unnecessary code.
+
+---
+
 ## v0.2.29
 
 ### Release Date: 2024-08-21
