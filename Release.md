@@ -1,5 +1,21 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.31
+
+### Release Date: 2024-08-24
+
+### Chore
+- Upgraded to `turbo-restler` v0.2.27 and `turbo-signer` v0.1.7.
+
+### Refactor
+- For `RestAPI`:
+  - Extracted common code from `RestApi` into a separate `common_rest_api.RestApiWrapper`.
+  - Renamed `Request` to `RequestBuilder` and moved the call to `CallRestAPI` out of the `Do` method to `common_rest_api.RestApiWrapper`.
+- For `WebApi`:
+  - Renamed `Request` to `RequestBuilder`.
+
+---
+
 ## v0.2.30
 
 ### Release Date: 2024-08-22

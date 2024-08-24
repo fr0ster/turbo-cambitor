@@ -7,42 +7,42 @@ import (
 	request "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/request"
 )
 
-func (ra *RestApi) OrderListOCO() *request.Request {
+func (ra *RestApiWrapper) OrderListOCO() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/orderList/oco", params, ra.sign)
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/orderList/oco", params, ra.GetSignature())
 }
 
-func (ra *RestApi) OrderListOTO() *request.Request {
+func (ra *RestApiWrapper) OrderListOTO() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/orderList/oto", params, ra.sign)
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/orderList/oto", params, ra.GetSignature())
 }
 
-func (ra *RestApi) NewOrderOCO() *request.Request {
+func (ra *RestApiWrapper) NewOrderOCO() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodPost, ra.apiBaseUrl, "/api/v3/order/oco", params, ra.sign)
+	return request.New(http.MethodPost, ra.GetApiBaseUrl(), "/api/v3/order/oco", params, ra.GetSignature())
 }
 
-func (ra *RestApi) CancelOrderOCO() *request.Request {
+func (ra *RestApiWrapper) CancelOrderOCO() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodDelete, ra.apiBaseUrl, "/api/v3/orderList/oco", params, ra.sign)
+	return request.New(http.MethodDelete, ra.GetApiBaseUrl(), "/api/v3/orderList/oco", params, ra.GetSignature())
 }
 
-func (ra *RestApi) QueryOrderOCO() *request.Request {
+func (ra *RestApiWrapper) QueryOrderOCO() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/orderList ", params, ra.sign)
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/orderList ", params, ra.GetSignature())
 }
 
-func (ra *RestApi) QueryAllOrderOCO() *request.Request {
+func (ra *RestApiWrapper) QueryAllOrderOCO() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/allOrderList", params, ra.sign)
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/allOrderList", params, ra.GetSignature())
 }
 
-func (ra *RestApi) QueryOpenOrderOCO() *request.Request {
+func (ra *RestApiWrapper) QueryOpenOrderOCO() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/openOrderList", params, ra.sign)
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/openOrderList", params, ra.GetSignature())
 }
 
-func (ra *RestApi) NewOrderSOR() *request.Request {
+func (ra *RestApiWrapper) NewOrderSOR() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodPost, ra.apiBaseUrl, "/api/v3/order/sor", params, ra.sign)
+	return request.New(http.MethodPost, ra.GetApiBaseUrl(), "/api/v3/order/sor", params, ra.GetSignature())
 }

@@ -21,7 +21,7 @@ func New(
 	host web_socket.WsHost,
 	path web_socket.WsPath,
 	scheme web_socket.WsScheme) *StreamWrapper {
-	stream, err := web_socket.New(host, path, scheme)
+	stream, err := web_socket.New(host, path, scheme, web_socket.TextMessage)
 	if err != nil {
 		logrus.Fatalf("Error: %v", err)
 	}

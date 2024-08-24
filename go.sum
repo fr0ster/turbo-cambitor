@@ -3,10 +3,10 @@ github.com/bitly/go-simplejson v0.5.1/go.mod h1:YOPVLzCfwK14b4Sff3oP1AmGhI9T9Vsg
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/fr0ster/turbo-restler v0.2.26 h1:+Vt5kYcFsbqzlhvGeriZYUw9g8P4W9PPykiDSHJ+pGI=
-github.com/fr0ster/turbo-restler v0.2.26/go.mod h1:PWnSkIFTlYuSvGSjD1i924pppdLRWwGR81jvVkQ4Of0=
-github.com/fr0ster/turbo-signer v0.1.6 h1:1dS2Npc1Eq6uqqr3xAUjwpOTaENYc1/qLvD6znQk0bQ=
-github.com/fr0ster/turbo-signer v0.1.6/go.mod h1:bRyp8RnLzmVP9dmtVCTjUAVbeN2VOjtcBjdKJm2pSu4=
+github.com/fr0ster/turbo-restler v0.2.27 h1:cN+y5qtw9q4JHmXREhId8/Cmi3lZm2LKG6Etu0C7bgY=
+github.com/fr0ster/turbo-restler v0.2.27/go.mod h1:1KfbnpXjFtYZFPdwXtC2Pp4IDpwwA6kCIsAxUqkqn9Q=
+github.com/fr0ster/turbo-signer v0.1.7 h1:LjY/8gm0K65sVEidS2Pk9223qZqlfMCWsy3dfubfVfE=
+github.com/fr0ster/turbo-signer v0.1.7/go.mod h1:bRyp8RnLzmVP9dmtVCTjUAVbeN2VOjtcBjdKJm2pSu4=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=

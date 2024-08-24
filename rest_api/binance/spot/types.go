@@ -1,16 +1,11 @@
 package spot_rest_api
 
 import (
-	"sync"
-
-	rest_api "github.com/fr0ster/turbo-restler/rest_api"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	common_rest_api "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/rest_api"
 )
 
 type (
-	RestApi struct {
-		apiBaseUrl rest_api.ApiBaseUrl
-		mutex      *sync.Mutex
-		sign       signature.Sign
+	RestApiWrapper struct {
+		common_rest_api.RestApiWrapper
 	}
 )

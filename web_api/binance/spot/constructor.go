@@ -10,26 +10,26 @@ import (
 )
 
 type WebApi interface {
-	AccountInformation() *request.Request
-	CancelOrder() *request.Request
-	CancelReplaceOrder() *request.Request
-	ExchangeInfo() *request.Request
-	Logon() *request.Request
-	Logout() *request.Request
-	OrderBook() *request.Request
-	Ping() *request.Request
-	PlaceOrder() *request.Request
-	QueryAllOrders() *request.Request
-	QueryOpenOrders() *request.Request
-	QueryOrder() *request.Request
-	Status() *request.Request
-	SymbolBookTicker() *request.Request
-	SymbolPriceTicker() *request.Request
-	Time() *request.Request
+	AccountInformation() *request.RequestBuilder
+	CancelOrder() *request.RequestBuilder
+	CancelReplaceOrder() *request.RequestBuilder
+	ExchangeInfo() *request.RequestBuilder
+	Logon() *request.RequestBuilder
+	Logout() *request.RequestBuilder
+	OrderBook() *request.RequestBuilder
+	Ping() *request.RequestBuilder
+	PlaceOrder() *request.RequestBuilder
+	QueryAllOrders() *request.RequestBuilder
+	QueryOpenOrders() *request.RequestBuilder
+	QueryOrder() *request.RequestBuilder
+	Status() *request.RequestBuilder
+	SymbolBookTicker() *request.RequestBuilder
+	SymbolPriceTicker() *request.RequestBuilder
+	Time() *request.RequestBuilder
 
-	UserDataStreamStart() *request.Request
-	UserDataStreamPing() *request.Request
-	UserDataStreamStop() *request.Request
+	UserDataStreamStart() *request.RequestBuilder
+	UserDataStreamPing() *request.RequestBuilder
+	UserDataStreamStop() *request.RequestBuilder
 
 	Call(*simplejson.Json) (*simplejson.Json, error)
 

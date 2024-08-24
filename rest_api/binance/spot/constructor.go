@@ -1,24 +1,19 @@
 package spot_rest_api
 
 import (
-	"sync"
-
+	common_rest_api "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/rest_api"
 	signature "github.com/fr0ster/turbo-signer/signature"
 )
 
-func New(sign signature.Sign, useTestNet ...bool) (api *RestApi) {
+func New(sign signature.Sign, useTestNet ...bool) (api *RestApiWrapper) {
 	const (
 		BaseAPIMainUrl    = "https://api.binance.com"
 		BaseAPITestnetUrl = "https://testnet.binance.vision"
 	)
-	api = &RestApi{
-		mutex: &sync.Mutex{},
-		sign:  sign,
-	}
 	if len(useTestNet) > 0 && useTestNet[0] {
-		api.apiBaseUrl = BaseAPITestnetUrl
+		api = &RestApiWrapper{*common_rest_api.New(BaseAPITestnetUrl, sign)}
 	} else {
-		api.apiBaseUrl = BaseAPIMainUrl
+		api = &RestApiWrapper{*common_rest_api.New(BaseAPIMainUrl, sign)}
 	}
 	return
 }

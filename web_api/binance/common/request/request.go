@@ -11,18 +11,17 @@ import (
 )
 
 type (
-	Method  string
-	Request struct {
+	Method         string
+	RequestBuilder struct {
 		sign   signature.Sign
 		waHost web_socket.WsHost
 		waPath web_socket.WsPath
 		method Method
 		params *simplejson.Json
-		// connection *web_api.WebApi
 	}
 )
 
-func (rq *Request) Set(name string, value interface{}) *Request {
+func (rq *RequestBuilder) Set(name string, value interface{}) *RequestBuilder {
 	if rq.params == nil {
 		rq.params = simplejson.New()
 	}
@@ -30,7 +29,7 @@ func (rq *Request) Set(name string, value interface{}) *Request {
 	return rq
 }
 
-func (rq *Request) SetAPIKey() *Request {
+func (rq *RequestBuilder) SetAPIKey() *RequestBuilder {
 	if rq.params == nil {
 		rq.params = simplejson.New()
 	}
@@ -38,7 +37,7 @@ func (rq *Request) SetAPIKey() *Request {
 	return rq
 }
 
-func (rq *Request) SetTimestamp() *Request {
+func (rq *RequestBuilder) SetTimestamp() *RequestBuilder {
 	if rq.params == nil {
 		rq.params = simplejson.New()
 	}
@@ -46,7 +45,7 @@ func (rq *Request) SetTimestamp() *Request {
 	return rq
 }
 
-func (rq *Request) SetSignature() *Request {
+func (rq *RequestBuilder) SetSignature() *RequestBuilder {
 	if rq.params == nil {
 		rq.params = simplejson.New()
 	}
@@ -54,7 +53,7 @@ func (rq *Request) SetSignature() *Request {
 	return rq
 }
 
-func (rq *Request) Do() (result *simplejson.Json) {
+func (rq *RequestBuilder) Do() (result *simplejson.Json) {
 	result = simplejson.New()
 	result.Set("id", uuid.New().String())
 	result.Set("method", rq.method)
@@ -64,8 +63,8 @@ func (rq *Request) Do() (result *simplejson.Json) {
 	return
 }
 
-func New(method Method, waHost web_socket.WsHost, waPath web_socket.WsPath, sign signature.Sign) *Request {
-	return &Request{
+func New(method Method, waHost web_socket.WsHost, waPath web_socket.WsPath, sign signature.Sign) *RequestBuilder {
+	return &RequestBuilder{
 		sign:   sign,
 		waHost: waHost,
 		waPath: waPath,

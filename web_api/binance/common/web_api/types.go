@@ -4,8 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bitly/go-simplejson"
-
 	"github.com/fr0ster/turbo-restler/web_socket"
 	signature "github.com/fr0ster/turbo-signer/signature"
 )
@@ -32,52 +30,4 @@ type (
 		wsHandlerMap  web_socket.WsHandlerMap
 		timeOut       time.Duration
 	}
-	Result struct {
-		APIKey           string `json:"apiKey"`
-		AuthorizedSince  int64  `json:"authorizedSince"`
-		ConnectedSince   int64  `json:"connectedSince"`
-		ReturnRateLimits bool   `json:"returnRateLimits"`
-		ServerTime       int64  `json:"serverTime"`
-	}
-	Method  string
-	Request struct {
-		ID     string           `json:"id"`
-		Method Method           `json:"method"`
-		Params *simplejson.Json `json:"params"`
-	}
-	Response struct {
-		ID         string      `json:"id"`
-		Status     int         `json:"status"`
-		Error      ErrorDetail `json:"error"`
-		Result     interface{} `json:"result"`
-		RateLimits []RateLimit `json:"rateLimits"`
-	}
-
-	ErrorDetail struct {
-		Code int    `json:"code"`
-		Msg  string `json:"msg"`
-	}
-
-	RateLimit struct {
-		RateLimitType string `json:"rateLimitType"`
-		Interval      string `json:"interval"`
-		IntervalNum   int    `json:"intervalNum"`
-		Limit         int    `json:"limit"`
-		Count         int    `json:"count"`
-	}
 )
-
-func (rq *Request) SetParameter(name string, value string) {
-	if rq.Params == nil {
-		rq.Params = simplejson.New()
-	}
-	rq.Params.Set(name, value)
-}
-
-func (rq *Request) Json() *simplejson.Json {
-	js := simplejson.New()
-	js.Set("id", rq.ID)
-	js.Set("method", rq.Method)
-	js.Set("params", rq.Params)
-	return js
-}

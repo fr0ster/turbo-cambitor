@@ -38,8 +38,11 @@ func (wa *WebApiWrapper) Call(rq *simplejson.Json) (result *simplejson.Json, err
 	return
 }
 
-func New(host web_socket.WsHost, path web_socket.WsPath, sign signature.Sign) *WebApiWrapper {
-	wa, err := web_socket.New(host, path, web_socket.SchemeWSS)
+func New(
+	host web_socket.WsHost,
+	path web_socket.WsPath,
+	sign signature.Sign) *WebApiWrapper {
+	wa, err := web_socket.New(host, path, web_socket.SchemeWSS, web_socket.TextMessage)
 	if err != nil {
 		return nil
 	}

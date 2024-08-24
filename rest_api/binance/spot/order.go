@@ -7,42 +7,42 @@ import (
 	request "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/request"
 )
 
-func (ra *RestApi) NewOrder() *request.Request {
+func (ra *RestApiWrapper) NewOrder() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodPost, ra.apiBaseUrl, "/api/v3/Request", params, ra.sign)
+	return request.New(http.MethodPost, ra.GetApiBaseUrl(), "/api/v3/Request", params, ra.GetSignature())
 }
 
-func (ra *RestApi) TestOrder() *request.Request {
+func (ra *RestApiWrapper) TestOrder() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/Request/test", params, ra.sign)
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/Request/test", params, ra.GetSignature())
 }
 
-func (ra *RestApi) QueryOrder() *request.Request {
+func (ra *RestApiWrapper) QueryOrder() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/Request", params, ra.sign)
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/Request", params, ra.GetSignature())
 }
 
-func (ra *RestApi) CancelOrder() *request.Request {
+func (ra *RestApiWrapper) CancelOrder() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodDelete, ra.apiBaseUrl, "/api/v3/Request", params, ra.sign)
+	return request.New(http.MethodDelete, ra.GetApiBaseUrl(), "/api/v3/Request", params, ra.GetSignature())
 }
 
-func (ra *RestApi) CancelAllOrder() *request.Request {
+func (ra *RestApiWrapper) CancelAllOrder() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodDelete, ra.apiBaseUrl, "/api/v3/openOrders", params, ra.sign)
+	return request.New(http.MethodDelete, ra.GetApiBaseUrl(), "/api/v3/openOrders", params, ra.GetSignature())
 }
 
-func (ra *RestApi) CancelReplaceOrder() *request.Request {
+func (ra *RestApiWrapper) CancelReplaceOrder() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodPost, ra.apiBaseUrl, "/api/v3/Request/cancelReplace", params, ra.sign)
+	return request.New(http.MethodPost, ra.GetApiBaseUrl(), "/api/v3/Request/cancelReplace", params, ra.GetSignature())
 }
 
-func (ra *RestApi) QueryOpenOrders() *request.Request {
+func (ra *RestApiWrapper) QueryOpenOrders() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/openOrders", params, ra.sign)
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/openOrders", params, ra.GetSignature())
 }
 
-func (ra *RestApi) QueryAllOrders() *request.Request {
+func (ra *RestApiWrapper) QueryAllOrders() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/allOrders", params, ra.sign)
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/allOrders", params, ra.GetSignature())
 }

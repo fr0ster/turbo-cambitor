@@ -6,80 +6,80 @@ import (
 	request "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/request"
 )
 
-func (ra *RestApi) Lock() {
-	ra.mutex.Lock()
+func (ra *RestApiWrapper) Lock() {
+	ra.GetMutex().Lock()
 }
 
-func (ra *RestApi) Unlock() {
-	ra.mutex.Unlock()
+func (ra *RestApiWrapper) Unlock() {
+	ra.GetMutex().Unlock()
 }
 
-func (ra *RestApi) ExchangeInfo() *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/exchangeInfo", nil, ra.sign)
+func (ra *RestApiWrapper) ExchangeInfo() *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/exchangeInfo", nil, ra.GetSignature())
 	return rq
 }
 
-func (ra *RestApi) Ping() *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ping", nil, ra.sign)
+func (ra *RestApiWrapper) Ping() *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/ping", nil, ra.GetSignature())
 	return rq
 }
 
-func (ra *RestApi) OrderBook(symbol string) *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/depth", nil, ra.sign)
+func (ra *RestApiWrapper) OrderBook(symbol string) *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/depth", nil, ra.GetSignature())
 	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) RecentTrades(symbol string) *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/trades", nil, ra.sign)
+func (ra *RestApiWrapper) RecentTrades(symbol string) *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/trades", nil, ra.GetSignature())
 	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) OldTradesLookup(symbol string) *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/historicalTrades", nil, ra.sign)
+func (ra *RestApiWrapper) OldTradesLookup(symbol string) *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/historicalTrades", nil, ra.GetSignature())
 	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) AggregateTrades(symbol string) *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/aggTrades", nil, ra.sign)
+func (ra *RestApiWrapper) AggregateTrades(symbol string) *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/aggTrades", nil, ra.GetSignature())
 	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) Klines(symbol string, interval string) *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/klines", nil, ra.sign)
+func (ra *RestApiWrapper) Klines(symbol string, interval string) *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/klines", nil, ra.GetSignature())
 	return rq.Set("symbol", symbol).Set("interval", interval)
 }
 
-func (ra *RestApi) UIKlines(symbol string, interval string) *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/uiKlines", nil, ra.sign)
+func (ra *RestApiWrapper) UIKlines(symbol string, interval string) *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/uiKlines", nil, ra.GetSignature())
 	return rq.Set("symbol", symbol).Set("interval", interval)
 }
 
-func (ra *RestApi) CurrentAvgPrice(symbol string) *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/avgPrice", nil, ra.sign)
+func (ra *RestApiWrapper) CurrentAvgPrice(symbol string) *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/avgPrice", nil, ra.GetSignature())
 	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) Ticker24hr(symbol string) *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/24hr", nil, ra.sign)
+func (ra *RestApiWrapper) Ticker24hr(symbol string) *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/ticker/24hr", nil, ra.GetSignature())
 	return rq.Set("symbol", symbol)
 }
 
-func (ra *RestApi) TradingDay() *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/tradingDay", nil, ra.sign)
+func (ra *RestApiWrapper) TradingDay() *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/ticker/tradingDay", nil, ra.GetSignature())
 	return rq
 }
 
-func (ra *RestApi) TickerPrice() *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/price", nil, ra.sign)
+func (ra *RestApiWrapper) TickerPrice() *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/ticker/price", nil, ra.GetSignature())
 	return rq
 }
 
-func (ra *RestApi) TickerBookTicker() *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/bookTicker", nil, ra.sign)
+func (ra *RestApiWrapper) TickerBookTicker() *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/ticker/bookTicker", nil, ra.GetSignature())
 	return rq
 }
 
-func (ra *RestApi) TickerV3() *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/api/v3/ticker/price", nil, ra.sign)
+func (ra *RestApiWrapper) TickerV3() *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/api/v3/ticker/price", nil, ra.GetSignature())
 	return rq
 }

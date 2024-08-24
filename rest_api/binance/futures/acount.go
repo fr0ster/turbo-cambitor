@@ -8,85 +8,85 @@ import (
 	request "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/request"
 )
 
-func (ra *RestApi) AccountV3() *request.Request {
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v3/account", nil, ra.sign)
+func (ra *RestApiWrapper) AccountV3() *request.RequestBuilder {
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v3/account", nil, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) Account() *request.Request {
+func (ra *RestApiWrapper) Account() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v2/account", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v2/account", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) BalanceV3() *request.Request {
+func (ra *RestApiWrapper) BalanceV3() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v3/balance", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v3/balance", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) Balance() *request.Request {
+func (ra *RestApiWrapper) Balance() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v2/balance", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v2/balance", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) UserCommissionRate() *request.Request {
+func (ra *RestApiWrapper) UserCommissionRate() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/commissionRate", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/commissionRate", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) AccountConfiguration() *request.Request {
+func (ra *RestApiWrapper) AccountConfiguration() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/accountConfig", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/accountConfig", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) SymbolConfiguration() *request.Request {
+func (ra *RestApiWrapper) SymbolConfiguration() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/symbolConfig", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/symbolConfig", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) ForceOrders() *request.Request {
+func (ra *RestApiWrapper) ForceOrders() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/rateLimit/order", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/rateLimit/order", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) NotionalLeverageBrackets() *request.Request {
+func (ra *RestApiWrapper) NotionalLeverageBrackets() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/leverageBracket", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/leverageBracket", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) MultiAssetsMargin() *request.Request {
+func (ra *RestApiWrapper) MultiAssetsMargin() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/multiAssetsMargin", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/multiAssetsMargin", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) PositionMode() *request.Request {
+func (ra *RestApiWrapper) PositionMode() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/positionSide/dual", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/positionSide/dual", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) Income() *request.Request {
+func (ra *RestApiWrapper) Income() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/income", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/income", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
-func (ra *RestApi) ToggleBNBBurn(feeBurn bool) *request.Request {
+func (ra *RestApiWrapper) ToggleBNBBurn(feeBurn bool) *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodPost, ra.apiBaseUrl, "/fapi/v1/feeBurn", params, ra.sign)
+	rq := request.New(http.MethodPost, ra.GetApiBaseUrl(), "/fapi/v1/feeBurn", params, ra.GetSignature())
 	return rq.SetAPIKey().Set("feeBurn", strconv.FormatBool(feeBurn))
 }
 
-func (ra *RestApi) BNBBurnStatus() *request.Request {
+func (ra *RestApiWrapper) BNBBurnStatus() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.apiBaseUrl, "/fapi/v1/feeBurn", params, ra.sign)
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/feeBurn", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }

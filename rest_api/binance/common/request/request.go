@@ -1,6 +1,7 @@
 package order
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/bitly/go-simplejson"
@@ -11,7 +12,7 @@ import (
 )
 
 type (
-	Request struct {
+	RequestBuilder struct {
 		sign       signature.Sign
 		apiBaseUrl rest_api.ApiBaseUrl
 		endPoint   rest_api.EndPoint
@@ -20,7 +21,7 @@ type (
 	}
 )
 
-func (rq *Request) Set(name string, value interface{}) *Request {
+func (rq *RequestBuilder) Set(name string, value interface{}) *RequestBuilder {
 	if rq.params == nil {
 		rq.params = simplejson.New()
 	}
@@ -28,7 +29,7 @@ func (rq *Request) Set(name string, value interface{}) *Request {
 	return rq
 }
 
-func (rq *Request) SetAPIKey() *Request {
+func (rq *RequestBuilder) SetAPIKey() *RequestBuilder {
 	if rq.params == nil {
 		rq.params = simplejson.New()
 	}
@@ -36,7 +37,7 @@ func (rq *Request) SetAPIKey() *Request {
 	return rq
 }
 
-func (rq *Request) SetTimestamp() *Request {
+func (rq *RequestBuilder) SetTimestamp() *RequestBuilder {
 	if rq.params == nil {
 		rq.params = simplejson.New()
 	}
@@ -44,7 +45,7 @@ func (rq *Request) SetTimestamp() *Request {
 	return rq
 }
 
-func (rq *Request) SetSignature() *Request {
+func (rq *RequestBuilder) SetSignature() *RequestBuilder {
 	if rq.params == nil {
 		rq.params = simplejson.New()
 	}
@@ -52,22 +53,18 @@ func (rq *Request) SetSignature() *Request {
 	return rq
 }
 
-func (rq *Request) Do() (response *simplejson.Json, err error) {
-	req, err := common_rest_api.Params2Request(
+func (rq *RequestBuilder) Do() (req *http.Request, err error) {
+	req, err = common_rest_api.Params2Request(
 		rq.params,
 		rq.apiBaseUrl,
 		rq.endPoint,
 		rq.method,
 		rq.sign.GetAPIKey())
-	if err != nil {
-		return
-	}
-	response, err = rest_api.CallRestAPI(req)
 	return
 }
 
-func New(method rest_api.HttpMethod, baseUrl rest_api.ApiBaseUrl, endPoint rest_api.EndPoint, params *simplejson.Json, sign signature.Sign) *Request {
-	return &Request{
+func New(method rest_api.HttpMethod, baseUrl rest_api.ApiBaseUrl, endPoint rest_api.EndPoint, params *simplejson.Json, sign signature.Sign) *RequestBuilder {
+	return &RequestBuilder{
 		sign:       sign,
 		apiBaseUrl: baseUrl,
 		endPoint:   endPoint,

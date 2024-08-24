@@ -10,30 +10,30 @@ import (
 )
 
 type WebApi interface {
-	AccountBalance() *request.Request
-	AccountBalanceV2() *request.Request
-	AccountInformation() *request.Request
-	AccountInformationV2() *request.Request
-	AccountPositionsV2() *request.Request
-	AccountPositions() *request.Request
-	CancelOrder() *request.Request
-	ModifyOrder() *request.Request
-	Logon() *request.Request
-	Logout() *request.Request
-	OrderBook() *request.Request
-	Ping() *request.Request
-	PlaceOrder() *request.Request
-	QueryOrder() *request.Request
-	QueryPosition() *request.Request
-	QueryPositionV2() *request.Request
-	Status() *request.Request
-	SymbolBookTicker() *request.Request
-	SymbolPriceTicker() *request.Request
-	Time() *request.Request
+	AccountBalance() *request.RequestBuilder
+	AccountBalanceV2() *request.RequestBuilder
+	AccountInformation() *request.RequestBuilder
+	AccountInformationV2() *request.RequestBuilder
+	AccountPositionsV2() *request.RequestBuilder
+	AccountPositions() *request.RequestBuilder
+	CancelOrder() *request.RequestBuilder
+	ModifyOrder() *request.RequestBuilder
+	Logon() *request.RequestBuilder
+	Logout() *request.RequestBuilder
+	OrderBook() *request.RequestBuilder
+	Ping() *request.RequestBuilder
+	PlaceOrder() *request.RequestBuilder
+	QueryOrder() *request.RequestBuilder
+	QueryPosition() *request.RequestBuilder
+	QueryPositionV2() *request.RequestBuilder
+	Status() *request.RequestBuilder
+	SymbolBookTicker() *request.RequestBuilder
+	SymbolPriceTicker() *request.RequestBuilder
+	Time() *request.RequestBuilder
 
-	UserDataStreamStart() *request.Request
-	UserDataStreamPing() *request.Request
-	UserDataStreamStop() *request.Request
+	UserDataStreamStart() *request.RequestBuilder
+	UserDataStreamPing() *request.RequestBuilder
+	UserDataStreamStop() *request.RequestBuilder
 
 	Call(*simplejson.Json) (*simplejson.Json, error)
 
