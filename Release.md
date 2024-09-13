@@ -1,5 +1,16 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.33
+
+### Release Date: 2024-09-12
+
+#### RestAPI:
+- **Updated**: Migrated to v3 endpoints for `Account Balance` and `PositionRisk`.
+
+This release includes updates to the RestAPI component of Turbo-Cambitor. The `Account Balance` and `PositionRisk` functions have been migrated to use the v3 endpoints, ensuring improved performance and compatibility with the latest API standards.
+
+---
+
 ## v0.2.32
 
 ### Release Date: 2024-09-12

@@ -21,105 +21,127 @@ func TestCallRestAPI(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, listenkey)
 
-	response, err := ra.AccountV3().SetTimestamp().SetSignature().Do()
+	rq, err := ra.Account().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
-	assert.NotNil(t, response)
-}
-
-func TestAccountV3(t *testing.T) {
-	ra := futures.New(sign, true)
-	response, err := ra.AccountV3().SetTimestamp().SetSignature().Do()
-	assert.NoError(t, err)
-	assert.NotNil(t, response)
+	assert.NotNil(t, rq)
 }
 
 func TestAccount(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.Account().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.Account().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
-	assert.NotNil(t, response)
-}
-
-func TestBalanceV3(t *testing.T) {
-	ra := futures.New(sign, true)
-	response, err := ra.BalanceV3().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestBalance(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.Balance().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.Balance().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestPositionRisk(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.PositionRisk().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.PositionRisk().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestUserCommissionRate(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.UserCommissionRate().Set("symbol", "BTCUSDT").SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.UserCommissionRate().Set("symbol", "BTCUSDT").SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestAccountConfiguration(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.AccountConfiguration().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.AccountConfiguration().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestSymbolConfiguration(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.SymbolConfiguration().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.SymbolConfiguration().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestForceOrders(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.ForceOrders().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.ForceOrders().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestNotionalLeverageBrackets(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.NotionalLeverageBrackets().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.NotionalLeverageBrackets().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestMultiAssetsMargin(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.MultiAssetsMargin().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.MultiAssetsMargin().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestPositionMode(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.PositionMode().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.PositionMode().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestIncome(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.Income().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.Income().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }
 
 func TestBNBBurnStatus(t *testing.T) {
 	ra := futures.New(sign, true)
-	response, err := ra.BNBBurnStatus().SetAPIKey().SetTimestamp().SetSignature().Do()
+	rq, err := ra.BNBBurnStatus().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, rq)
+	response, err := ra.Call(rq)
 	assert.NoError(t, err)
 	assert.NotNil(t, response)
 }

@@ -8,32 +8,21 @@ import (
 	request "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/request"
 )
 
-func (ra *RestApiWrapper) AccountV3() *request.RequestBuilder {
-	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v3/account", nil, ra.GetSignature())
-	return rq.SetAPIKey()
-}
-
 func (ra *RestApiWrapper) Account() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v2/account", params, ra.GetSignature())
-	return rq.SetAPIKey()
-}
-
-func (ra *RestApiWrapper) BalanceV3() *request.RequestBuilder {
-	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v3/balance", params, ra.GetSignature())
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v3/account", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
 func (ra *RestApiWrapper) Balance() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v2/balance", params, ra.GetSignature())
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v3/balance", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
 func (ra *RestApiWrapper) PositionRisk() *request.RequestBuilder {
 	params := simplejson.New()
-	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v2/positionRisk", params, ra.GetSignature())
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v3/positionRisk", params, ra.GetSignature())
 	return rq.SetAPIKey()
 }
 
