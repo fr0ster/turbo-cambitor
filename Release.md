@@ -1,5 +1,19 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.32
+
+### Release Date: 2024-09-12
+
+#### RestAPI:
+- **Added**: Function for `PositionRisk`.
+
+#### WebApi:
+- **Removed**: Functions that use deprecated endpoints.
+
+This release includes updates to both the RestAPI and WebApi components of Turbo-Cambitor. The new `PositionRisk` function has been added to the RestAPI, providing enhanced risk management capabilities. Additionally, outdated functions that relied on deprecated endpoints have been removed from the WebApi to ensure compatibility and maintainability.
+
+---
+
 ## v0.2.31
 
 ### Release Date: 2024-08-24

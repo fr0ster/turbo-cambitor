@@ -54,6 +54,13 @@ func TestBalance(t *testing.T) {
 	assert.NotNil(t, response)
 }
 
+func TestPositionRisk(t *testing.T) {
+	ra := futures.New(sign, true)
+	response, err := ra.PositionRisk().SetAPIKey().SetTimestamp().SetSignature().Do()
+	assert.NoError(t, err)
+	assert.NotNil(t, response)
+}
+
 func TestUserCommissionRate(t *testing.T) {
 	ra := futures.New(sign, true)
 	response, err := ra.UserCommissionRate().Set("symbol", "BTCUSDT").SetAPIKey().SetTimestamp().SetSignature().Do()

@@ -23,26 +23,10 @@ func TestAccountBalance(t *testing.T) {
 	assert.NotNil(t, response)
 }
 
-// Test 2: Account Balance V2
-func TestAccountBalanceV2(t *testing.T) {
-	wa := web_api.New(sign, true)
-	response, err := wa.Call(wa.AccountBalanceV2().SetAPIKey().SetTimestamp().SetSignature().Do())
-	assert.Nil(t, err)
-	assert.NotNil(t, response)
-}
-
 // Test 3: Account Information
 func TestAccountInformation(t *testing.T) {
 	wa := web_api.New(sign, true)
 	response, err := wa.Call(wa.AccountInformation().SetAPIKey().SetTimestamp().SetSignature().Do())
-	assert.Nil(t, err)
-	assert.NotNil(t, response)
-}
-
-// Test 4: Account Information V2
-func TestAccountInformationV2(t *testing.T) {
-	wa := web_api.New(sign, true)
-	response, err := wa.Call(wa.AccountInformationV2().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, response)
 }
@@ -54,21 +38,6 @@ func TestAccountPositions(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, response)
 }
-
-// Test 6: Account Positions V2
-func TestAccountPositionsV2(t *testing.T) {
-	wa := web_api.New(sign, true)
-	response, err := wa.Call(wa.AccountPositionsV2().SetAPIKey().SetTimestamp().SetSignature().Do())
-	assert.Nil(t, err)
-	assert.NotNil(t, response)
-}
-
-// // Test 9: Logon
-// func TestLogon(t *testing.T) {
-// 	wa := web_api.New(sign, true)
-// 	_, err := wa.Call(wa.Logon().SetAPIKey().SetTimestamp().SetSignature().Do())
-// 	assert.Equal(t, `error request: map[code:-4056 msg:HMAC_SHA256 API key is not supported.]`, err.Error())
-// }
 
 // Test 11: Order Book
 func TestOrderBook(t *testing.T) {

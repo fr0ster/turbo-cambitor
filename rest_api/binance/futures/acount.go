@@ -31,6 +31,12 @@ func (ra *RestApiWrapper) Balance() *request.RequestBuilder {
 	return rq.SetAPIKey()
 }
 
+func (ra *RestApiWrapper) PositionRisk() *request.RequestBuilder {
+	params := simplejson.New()
+	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v2/positionRisk", params, ra.GetSignature())
+	return rq.SetAPIKey()
+}
+
 func (ra *RestApiWrapper) UserCommissionRate() *request.RequestBuilder {
 	params := simplejson.New()
 	rq := request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/commissionRate", params, ra.GetSignature())

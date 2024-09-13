@@ -11,10 +11,7 @@ import (
 
 type WebApi interface {
 	AccountBalance() *request.RequestBuilder
-	AccountBalanceV2() *request.RequestBuilder
 	AccountInformation() *request.RequestBuilder
-	AccountInformationV2() *request.RequestBuilder
-	AccountPositionsV2() *request.RequestBuilder
 	AccountPositions() *request.RequestBuilder
 	CancelOrder() *request.RequestBuilder
 	ModifyOrder() *request.RequestBuilder
