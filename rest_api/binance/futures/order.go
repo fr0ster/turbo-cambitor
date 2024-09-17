@@ -9,17 +9,22 @@ import (
 
 func (ra *RestApiWrapper) NewOrder() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodPost, ra.GetApiBaseUrl(), "/fapi/v1/Request", params, ra.GetSignature())
+	return request.New(http.MethodPost, ra.GetApiBaseUrl(), "/fapi/v1/order", params, ra.GetSignature())
+}
+
+func (ra *RestApiWrapper) ModifyOrder() *request.RequestBuilder {
+	params := simplejson.New()
+	return request.New(http.MethodPut, ra.GetApiBaseUrl(), "/fapi/v1/order", params, ra.GetSignature())
 }
 
 func (ra *RestApiWrapper) QueryOrder() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/Request", params, ra.GetSignature())
+	return request.New(http.MethodGet, ra.GetApiBaseUrl(), "/fapi/v1/order", params, ra.GetSignature())
 }
 
 func (ra *RestApiWrapper) CancelOrder() *request.RequestBuilder {
 	params := simplejson.New()
-	return request.New(http.MethodDelete, ra.GetApiBaseUrl(), "/fapi/v1/Request", params, ra.GetSignature())
+	return request.New(http.MethodDelete, ra.GetApiBaseUrl(), "/fapi/v1/order", params, ra.GetSignature())
 }
 
 func (ra *RestApiWrapper) CancelAllOrder() *request.RequestBuilder {

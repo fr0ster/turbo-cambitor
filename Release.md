@@ -1,5 +1,17 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.2.34
+
+### Release Date: 2024-09-17
+
+#### RestAPI Changes:
+- **NewOrder**: Fixed endpoints for `binance/futures` and `binance/spot`.
+- **QueryOrder**: Fixed endpoints for `binance/futures` and `binance/spot`.
+- **CancelOrder**: Fixed endpoints for `binance/futures` and `binance/spot`.
+- **ModifyOrder**: Added new function to support order modification for `binance/futures` and `binance/spot`.
+
+---
+
 ## v0.2.33
 
 ### Release Date: 2024-09-12
