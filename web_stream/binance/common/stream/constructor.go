@@ -14,14 +14,21 @@ func (stream *StreamWrapper) SetSymbol(symbol string) *StreamWrapper {
 
 func (stream *StreamWrapper) SetTimeOut(timeout time.Duration) *StreamWrapper {
 	stream.timeOut = timeout
+	stream.low_stream.SetTimeOut(timeout)
 	return stream
 }
 
 func New(
 	host web_socket.WsHost,
 	path web_socket.WsPath,
-	scheme web_socket.WsScheme) *StreamWrapper {
-	stream, err := web_socket.New(host, path, scheme, web_socket.TextMessage)
+	scheme web_socket.WsScheme,
+	silent bool,
+	timeOut ...time.Duration) *StreamWrapper {
+	timeOutVar := 10 * time.Second
+	if len(timeOut) > 0 {
+		timeOutVar = timeOut[0]
+	}
+	stream, err := web_socket.New(host, path, scheme, web_socket.TextMessage, silent)
 	if err != nil {
 		logrus.Fatalf("Error: %v", err)
 	}
@@ -29,6 +36,6 @@ func New(
 		wsHost:     host,
 		wsPath:     path,
 		low_stream: stream,
-		timeOut:    10 * time.Second,
+		timeOut:    timeOutVar,
 	}
 }

@@ -21,8 +21,9 @@ func mockHandler(message *simplejson.Json) {
 }
 
 // Mock error handler for WebSocket errors
-func mockErrHandler(err error) {
+func mockErrHandler(err error) error {
 	logrus.Errorf("Error: %v", err)
+	return err
 }
 
 func TestKlines(t *testing.T) {

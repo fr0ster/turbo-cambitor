@@ -23,5 +23,6 @@ type (
 		symbol string
 		waHost web_socket.WsHost
 		mutex  *sync.Mutex
+		silent bool
 	}
 )

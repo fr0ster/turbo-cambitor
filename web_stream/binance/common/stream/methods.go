@@ -7,7 +7,6 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/fr0ster/turbo-restler/web_socket"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 func (stream *StreamWrapper) Close() {
@@ -27,6 +26,10 @@ func (ws *StreamWrapper) AddHandler(handlerId string, handler web_socket.WsHandl
 func (ws *StreamWrapper) RemoveHandler(handlerId string) *StreamWrapper {
 	ws.low_stream.RemoveHandler(handlerId)
 	return ws
+}
+
+func (ws *StreamWrapper) GetLoopStarted() bool {
+	return ws.low_stream.GetLoopStarted()
 }
 
 func (ws *StreamWrapper) Subscribe(subscriptions ...string) (err error) {
@@ -85,36 +88,37 @@ func (ws *StreamWrapper) Unsubscribe(subscriptions ...string) (err error) {
 	return
 }
 
-func (ws *StreamWrapper) Call(rq *simplejson.Json) (responseOut *simplejson.Json, err error) {
-	// Створюємо канал для отримання відповіді
+func (ws *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
+	id := rq.Get("id").MustString()
 	resultC := make(chan *simplejson.Json, 1)
 
-	// Додаємо обробник відповіді
-	ws.AddHandler(rq.Get("id").MustString(), func(response *simplejson.Json) {
-		if response.Get("id").MustString() == rq.Get("id").MustString() {
-			resultC <- response
+	// додай handler
+	ws.AddHandler(id, func(response *simplejson.Json) {
+		if response.Get("id").MustString() == id {
+			// 🔥 неблокуючий запис у канал
+			select {
+			case resultC <- response:
+			default:
+			}
 		}
 	})
+	// defer ws.RemoveHandler(id)
 
-	// Відправляємо запит
-	err = ws.low_stream.Send(rq)
-	if err != nil {
-		logrus.Fatalf("Error: %v", err)
+	// відправлення
+	if err := ws.low_stream.Send(rq); err != nil {
+		return nil, fmt.Errorf("send error: %w", err)
 	}
+
+	// очікування
 	select {
-	case <-time.After(ws.timeOut):
-		err = fmt.Errorf("timeout")
-		return
-	case response, ok := <-resultC:
-		if ok {
-			if response.Get("id").MustString() == rq.Get("id").MustString() {
-				responseOut = response
-			}
-		} else {
-			err = fmt.Errorf("error: %v", response.Get("error"))
+	case resp := <-resultC:
+		ws.RemoveHandler(id) // видалити handler
+		if resp == nil {
+			return nil, fmt.Errorf("nil response")
 		}
+		return resp, nil
+	case <-time.After(ws.timeOut):
+		ws.RemoveHandler(id) // видалити handler
+		return nil, fmt.Errorf("timeout")
 	}
-	// Видаляємо обробник відповіді
-	ws.RemoveHandler(rq.Get("id").MustString())
-	return
 }
