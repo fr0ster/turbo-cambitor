@@ -12,12 +12,7 @@ import (
 	streamer "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 
 	"github.com/bitly/go-simplejson"
-	"github.com/fr0ster/turbo-restler/web_socket"
 	"github.com/stretchr/testify/assert"
-)
-
-var (
-	testHost string = "localhost:8080"
 )
 
 func TestMain(m *testing.M) {
@@ -29,7 +24,12 @@ func TestMain(m *testing.M) {
 }
 
 func newStreamWrapper() *streamer.StreamWrapper {
-	return streamer.New(web_socket.WsHost(testHost), "/ws", "ws", false)
+	sw := streamer.New("localhost:8080", "/ws", "ws", false)
+	err := sw.Connect()
+	if err != nil {
+		panic(err)
+	}
+	return sw
 }
 
 // ----------------------------
