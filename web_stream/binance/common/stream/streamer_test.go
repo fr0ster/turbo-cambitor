@@ -2,6 +2,7 @@ package streamer_test
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -181,16 +182,14 @@ func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
 	rq := simplejson.New()
 	rq.Set("method", "CLOSE_GRACEFUL")
 	rq.Set("id", "graceful-close")
-	rq.SetPath([]string{"params", "restart"}, 500) // restart через 500мс
+	rq.SetPath([]string{"params", "restart"}, 500)
 
 	resp, err := sw.Call(rq)
-
 	assert.Error(t, err, "should return error due to graceful close")
-	assert.Nil(t, resp)
+	assert.Nil(t, resp, "no response expected")
 
-	// Спроба перепідключення
-	success := retryConnect(sw, 5, 200*time.Millisecond)
-	assert.True(t, success, "client should reconnect after graceful close with restart")
+	ok := retryConnect(sw, 10, 200*time.Millisecond)
+	assert.True(t, ok, "client should reconnect after CLOSE_GRACEFUL with restart")
 }
 
 func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
@@ -199,23 +198,27 @@ func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
 	rq := simplejson.New()
 	rq.Set("method", "CLOSE_ABRUPT")
 	rq.Set("id", "abrupt-close")
-	rq.SetPath([]string{"params", "restart"}, 500) // restart через 500мс
+	rq.SetPath([]string{"params", "restart"}, 500)
 
 	resp, err := sw.Call(rq)
-
 	assert.Error(t, err, "should return error due to abrupt close")
-	assert.Nil(t, resp)
+	assert.Nil(t, resp, "no response expected")
 
-	success := retryConnect(sw, 5, 200*time.Millisecond)
-	assert.True(t, success, "client should reconnect after abrupt close with restart")
+	ok := retryConnect(sw, 10, 200*time.Millisecond)
+	assert.True(t, ok, "client should reconnect after CLOSE_ABRUPT with restart")
 }
 
 func retryConnect(sw *streamer.StreamWrapper, maxAttempts int, delay time.Duration) bool {
 	for i := 0; i < maxAttempts; i++ {
 		time.Sleep(delay)
-		err := sw.Reconnect()
-		if err == nil {
-			return true
+		if err := sw.Reconnect(); err == nil {
+			// перевіряємо чи знову працює Call
+			testPing := simplejson.New()
+			testPing.Set("method", "LIST_SUBSCRIPTIONS")
+			testPing.Set("id", fmt.Sprintf("recheck-%d", i))
+			if _, err := sw.Call(testPing); err == nil {
+				return true
+			}
 		}
 	}
 	return false
