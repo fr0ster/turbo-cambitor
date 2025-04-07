@@ -23,7 +23,6 @@ func StartReusableMockServer(port int) {
 
 	addr := fmt.Sprintf(":%d", port)
 
-	// Якщо є попередній сервер — зупиняємо
 	if currentSrv != nil {
 		logrus.Warnf("🛑 Stopping existing server on port %d", port)
 		_ = currentSrv.Close()
@@ -40,6 +39,26 @@ func StartReusableMockServer(port int) {
 			return
 		}
 		defer conn.Close()
+
+		// Фонове надсилання повідомлень
+		stopChan := make(chan struct{})
+		go func() {
+			ticker := time.NewTicker(500 * time.Millisecond)
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-ticker.C:
+					msg := simplejson.New()
+					msg.Set("type", "ping")
+					msg.Set("time", time.Now().Format(time.RFC3339))
+					b, _ := msg.Encode()
+					conn.WriteMessage(websocket.TextMessage, b)
+				case <-stopChan:
+					return
+				}
+			}
+		}()
 
 		for {
 			_, msg, err := conn.ReadMessage()
@@ -59,6 +78,12 @@ func StartReusableMockServer(port int) {
 			resp := simplejson.New()
 			resp.Set("id", id)
 
+			// Перевіряємо параметр restart
+			restartAfter := 0
+			if restart := req.Get("params").Get("restart"); restart.Interface() != nil {
+				restartAfter = restart.MustInt()
+			}
+
 			switch method {
 			case "SUBSCRIBE":
 				resp.Set("result", "")
@@ -75,9 +100,23 @@ func StartReusableMockServer(port int) {
 				time.Sleep(100 * time.Millisecond)
 				conn.WriteMessage(websocket.CloseMessage,
 					websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"))
+				close(stopChan)
+				go func() {
+					if restartAfter > 0 {
+						time.Sleep(time.Duration(restartAfter) * time.Millisecond)
+						StartReusableMockServer(port)
+					}
+				}()
 				return
 			case "CLOSE_ABRUPT":
 				logrus.Info("💥 Abrupt close requested by client")
+				close(stopChan)
+				go func() {
+					if restartAfter > 0 {
+						time.Sleep(time.Duration(restartAfter) * time.Millisecond)
+						StartReusableMockServer(port)
+					}
+				}()
 				return
 			case "ERROR":
 				params := req.Get("params").MustArray()
@@ -88,12 +127,9 @@ func StartReusableMockServer(port int) {
 					}
 				}
 				resp.Set("error", errorText)
-				resp.Set("id", id) // 👈 обов’язково
-
+				resp.Set("id", id)
 				b, _ := resp.Encode()
 				conn.WriteMessage(websocket.TextMessage, b)
-
-				// ❗️ НЕ закриваємо з'єднання
 				continue
 			default:
 				resp.Set("error", "unknown method")
@@ -102,6 +138,8 @@ func StartReusableMockServer(port int) {
 			b, _ := resp.Encode()
 			conn.WriteMessage(websocket.TextMessage, b)
 		}
+
+		close(stopChan)
 	})
 
 	currentSrv = &http.Server{Addr: addr, Handler: mux}

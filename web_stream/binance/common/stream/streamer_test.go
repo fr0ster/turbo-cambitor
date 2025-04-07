@@ -174,3 +174,49 @@ func TestAbruptCloseStreamer(t *testing.T) {
 	assert.Nil(t, resp, "no response expected on abrupt close")
 	assert.Contains(t, err.Error(), "close", "error should mention closed connection")
 }
+
+func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
+	sw := newStreamWrapper()
+
+	rq := simplejson.New()
+	rq.Set("method", "CLOSE_GRACEFUL")
+	rq.Set("id", "graceful-close")
+	rq.SetPath([]string{"params", "restart"}, 500) // restart через 500мс
+
+	resp, err := sw.Call(rq)
+
+	assert.Error(t, err, "should return error due to graceful close")
+	assert.Nil(t, resp)
+
+	// Спроба перепідключення
+	success := retryConnect(sw, 5, 200*time.Millisecond)
+	assert.True(t, success, "client should reconnect after graceful close with restart")
+}
+
+func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
+	sw := newStreamWrapper()
+
+	rq := simplejson.New()
+	rq.Set("method", "CLOSE_ABRUPT")
+	rq.Set("id", "abrupt-close")
+	rq.SetPath([]string{"params", "restart"}, 500) // restart через 500мс
+
+	resp, err := sw.Call(rq)
+
+	assert.Error(t, err, "should return error due to abrupt close")
+	assert.Nil(t, resp)
+
+	success := retryConnect(sw, 5, 200*time.Millisecond)
+	assert.True(t, success, "client should reconnect after abrupt close with restart")
+}
+
+func retryConnect(sw *streamer.StreamWrapper, maxAttempts int, delay time.Duration) bool {
+	for i := 0; i < maxAttempts; i++ {
+		time.Sleep(delay)
+		err := sw.Reconnect()
+		if err == nil {
+			return true
+		}
+	}
+	return false
+}

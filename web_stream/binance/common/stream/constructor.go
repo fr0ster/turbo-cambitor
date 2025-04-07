@@ -1,6 +1,7 @@
 package streamer
 
 import (
+	"sync"
 	"time"
 
 	"github.com/fr0ster/turbo-restler/web_socket"
@@ -33,9 +34,14 @@ func New(
 		logrus.Fatalf("Error: %v", err)
 	}
 	return &StreamWrapper{
-		wsHost:     host,
-		wsPath:     path,
-		low_stream: stream,
-		timeOut:    timeOutVar,
+		wsHost:      host,
+		wsPath:      path,
+		wsScheme:    scheme,
+		symbol:      "",
+		messageType: web_socket.TextMessage,
+		silent:      silent,
+		low_stream:  stream,
+		timeOut:     timeOutVar,
+		mu:          sync.Mutex{},
 	}
 }

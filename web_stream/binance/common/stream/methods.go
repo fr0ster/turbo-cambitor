@@ -8,6 +8,7 @@ import (
 	"github.com/bitly/go-simplejson"
 	"github.com/fr0ster/turbo-restler/web_socket"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 func (stream *StreamWrapper) Close() {
@@ -141,4 +142,21 @@ func (ws *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	case <-time.After(ws.timeOut):
 		return nil, fmt.Errorf("timeout")
 	}
+}
+
+func (sw *StreamWrapper) Reconnect() error {
+	sw.Close()
+	return sw.Connect() // перезапускає підключення до ws://
+}
+
+func (sw *StreamWrapper) Connect() error {
+	sw.mu.Lock()
+	defer sw.mu.Unlock()
+
+	stream, err := web_socket.New(sw.wsHost, sw.wsPath, sw.wsScheme, sw.messageType, sw.silent)
+	if err != nil {
+		logrus.Fatalf("Error: %v", err)
+	}
+	sw.low_stream = stream
+	return nil
 }
