@@ -89,21 +89,49 @@ func (ws *StreamWrapper) Unsubscribe(subscriptions ...string) (err error) {
 }
 
 func (ws *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
-	id := rq.Get("id").MustString()
+	idRaw := rq.Get("id").Interface()
+	id, ok := idRaw.(string)
+	if !ok || id == "" {
+		return nil, fmt.Errorf("invalid or missing id in request")
+	}
+
 	resultC := make(chan *simplejson.Json, 1)
 	errorC := make(chan error, 1)
 
-	// Встановлюємо тимчасовий handler для помилок
-	ws.low_stream.SetErrHandler(func(err error) error {
-		select {
-		case errorC <- err:
-		default:
-		}
-		return err
-	})
+	// Тимчасовий handler на помилки з сокета (EOF тощо)
+	// ws.low_stream.SetErrHandler(func(err error) error {
+	// 	select {
+	// 	case errorC <- err:
+	// 	default:
+	// 	}
+	// 	return err
+	// })
 
 	ws.AddHandler(id, func(response *simplejson.Json) {
-		if response.Get("id").MustString() == id {
+		if response == nil {
+			err := fmt.Errorf("received nil response")
+			ws.low_stream.ErrorHandler()(err)
+			select {
+			case errorC <- err:
+			default:
+			}
+			return
+		}
+
+		respIDRaw := response.Get("id").Interface()
+		if respIDStr, ok := respIDRaw.(string); ok && respIDStr == id {
+			if errRaw := response.Get("error").Interface(); errRaw != nil {
+				if errStr, ok := errRaw.(string); ok && errStr != "" {
+					err := fmt.Errorf("%v", errStr)
+					ws.low_stream.ErrorHandler()(err)
+					select {
+					case errorC <- err:
+					default:
+					}
+					return
+				}
+			}
+
 			select {
 			case resultC <- response:
 			default:
@@ -112,20 +140,17 @@ func (ws *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	})
 	defer ws.RemoveHandler(id)
 
+	// Відправка запиту
 	if err := ws.low_stream.Send(rq); err != nil {
 		return nil, fmt.Errorf("send error: %w", err)
 	}
 
+	// Очікування результату, помилки або тайм-ауту
 	select {
-	case resp := <-resultC:
-		if resp == nil {
-			return nil, fmt.Errorf("nil response")
-		}
-		return resp, nil
-
 	case err := <-errorC:
-		return nil, fmt.Errorf("read error: %w", err)
-
+		return nil, fmt.Errorf("call error: %w", err)
+	case resp := <-resultC:
+		return resp, nil
 	case <-time.After(ws.timeOut):
 		return nil, fmt.Errorf("timeout")
 	}

@@ -2,100 +2,29 @@ package streamer_test
 
 import (
 	"flag"
-	"net/http"
-	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
+	mock_server "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream/mock_server"
+
 	streamer "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
-	"github.com/sirupsen/logrus"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/fr0ster/turbo-restler/web_socket"
-	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	testServer *httptest.Server
-	testHost   string
+	testHost string = "localhost:8080"
 )
-
-var upgrader = websocket.Upgrader{}
 
 func TestMain(m *testing.M) {
 	flag.Parse()
 
 	// Start server only once for all tests
-	testServer, testHost = startGlobalMockServer()
-	code := m.Run()
-
-	testServer.Close()
-	os.Exit(code)
-}
-
-func startGlobalMockServer() (*httptest.Server, string) {
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			logrus.Errorf("Upgrade error: %v", err)
-			return
-		}
-		defer conn.Close()
-
-		for {
-			_, msg, err := conn.ReadMessage()
-			if err != nil {
-				logrus.Warnf("Read error: %v", err)
-				break
-			}
-
-			req, err := simplejson.NewJson(msg)
-			if err != nil {
-				logrus.Warn("Invalid JSON received")
-				continue
-			}
-
-			id := req.Get("id").MustString()
-			method := req.Get("method").MustString()
-
-			resp := simplejson.New()
-			resp.Set("id", id)
-
-			switch method {
-			case "SUBSCRIBE":
-				resp.Set("result", "")
-			case "UNSUBSCRIBE":
-				resp.Set("result", true)
-			case "LIST_SUBSCRIPTIONS":
-				resp.Set("result", []string{"btcusdt@aggTrade"})
-			case "UNKNOWN_METHOD":
-				logrus.Info("🤐 Simulating timeout: no response sent")
-				time.Sleep(2 * time.Second)
-				continue // без відповіді
-			case "CLOSE_GRACEFUL":
-				logrus.Info("🔌 Graceful close requested by client")
-				time.Sleep(100 * time.Millisecond)
-				conn.WriteMessage(websocket.CloseMessage,
-					websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"))
-				return
-			case "CLOSE_ABRUPT":
-				logrus.Info("💥 Abrupt close requested by client")
-				conn.Close() // emulate crash
-				return
-			default:
-				resp.Set("error", "unknown method")
-			}
-
-			b, _ := resp.Encode()
-			conn.WriteMessage(websocket.TextMessage, b)
-		}
-	}))
-
-	host := strings.TrimPrefix(s.URL, "http://")
-	return s, host
+	mock_server.StartReusableMockServer(8080)
+	os.Exit(m.Run())
 }
 
 func newStreamWrapper() *streamer.StreamWrapper {
@@ -165,13 +94,35 @@ func TestClose(t *testing.T) {
 
 func TestSetErrHandler(t *testing.T) {
 	sw := newStreamWrapper()
+
 	called := false
+	errC := make(chan error, 1)
+
 	sw.SetErrHandler(func(err error) error {
 		called = true
+		errC <- err
 		return err
 	})
-	// Немає способу симулювати помилку через зовнішній сервер тут
-	assert.False(t, called, "Handler shouldn't be called without an error")
+
+	rq := simplejson.New()
+	rq.Set("method", "ERROR") // 👈 сервер обробляє цей метод
+	rq.Set("id", "err-test-id")
+	rq.Set("params", []interface{}{"custom-server-error"}) // 🧠 додаємо потрібну помилку
+
+	resp, err := sw.Call(rq)
+
+	select {
+	case receivedErr := <-errC:
+		assert.True(t, called, "Error handler should have been called")
+		assert.Error(t, receivedErr)
+		assert.Contains(t, receivedErr.Error(), "custom-server-error")
+	case <-time.After(2 * time.Second):
+		t.Fatal("Timeout waiting for error handler to be called")
+	}
+
+	assert.Nil(t, resp)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "custom-server-error")
 }
 
 func TestAddRemoveHandler(t *testing.T) {
