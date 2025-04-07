@@ -1,6 +1,7 @@
 package streamer
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -96,58 +97,44 @@ func (ws *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	}
 
 	resultC := make(chan *simplejson.Json, 1)
-	errorC := make(chan error, 1)
-
-	// Тимчасовий handler на помилки з сокета (EOF тощо)
-	// ws.low_stream.SetErrHandler(func(err error) error {
-	// 	select {
-	// 	case errorC <- err:
-	// 	default:
-	// 	}
-	// 	return err
-	// })
+	userErrC := ws.low_stream.GetErrorC() // 👈 Отримуємо глобальний канал помилок
 
 	ws.AddHandler(id, func(response *simplejson.Json) {
 		if response == nil {
-			err := fmt.Errorf("received nil response")
-			ws.low_stream.ErrorHandler()(err)
 			select {
-			case errorC <- err:
+			case userErrC <- fmt.Errorf("received nil response"):
 			default:
 			}
 			return
 		}
 
-		respIDRaw := response.Get("id").Interface()
-		if respIDStr, ok := respIDRaw.(string); ok && respIDStr == id {
-			if errRaw := response.Get("error").Interface(); errRaw != nil {
-				if errStr, ok := errRaw.(string); ok && errStr != "" {
-					err := fmt.Errorf("%v", errStr)
-					ws.low_stream.ErrorHandler()(err)
-					select {
-					case errorC <- err:
-					default:
-					}
-					return
-				}
-			}
+		respID := response.Get("id").MustString()
+		if respID != id {
+			return
+		}
 
+		if errStr := response.Get("error").MustString(); errStr != "" {
 			select {
-			case resultC <- response:
+			case userErrC <- errors.New(errStr):
 			default:
 			}
+			return
+		}
+
+		select {
+		case resultC <- response:
+		default:
 		}
 	})
 	defer ws.RemoveHandler(id)
 
-	// Відправка запиту
 	if err := ws.low_stream.Send(rq); err != nil {
 		return nil, fmt.Errorf("send error: %w", err)
 	}
 
-	// Очікування результату, помилки або тайм-ауту
 	select {
-	case err := <-errorC:
+	case err := <-userErrC:
+		ws.low_stream.ErrorHandler()(err)
 		return nil, fmt.Errorf("call error: %w", err)
 	case resp := <-resultC:
 		return resp, nil

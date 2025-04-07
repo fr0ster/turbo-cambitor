@@ -100,7 +100,11 @@ func TestSetErrHandler(t *testing.T) {
 
 	sw.SetErrHandler(func(err error) error {
 		called = true
-		errC <- err
+		select {
+		case errC <- err:
+		default:
+			t.Logf("⚠️ errC full, dropping error: %v", err)
+		}
 		return err
 	})
 
