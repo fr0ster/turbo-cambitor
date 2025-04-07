@@ -223,3 +223,55 @@ func retryConnect(sw *streamer.StreamWrapper, maxAttempts int, delay time.Durati
 	}
 	return false
 }
+
+func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
+	sw := newStreamWrapper()
+	sw.EnableAutoReconnect(200 * time.Millisecond)
+
+	defer sw.DisableAutoReconnect()
+
+	rq := simplejson.New()
+	rq.Set("method", "CLOSE_GRACEFUL")
+	rq.Set("id", "graceful-close")
+	rq.SetPath([]string{"params", "restart"}, 500)
+
+	resp, err := sw.Call(rq)
+	assert.Error(t, err, "should return error due to graceful close")
+	assert.Nil(t, resp)
+
+	ok := waitUntilConnected(sw, 10, 300*time.Millisecond)
+	assert.True(t, ok, "should auto-reconnect after CLOSE_GRACEFUL with restart")
+}
+
+func TestAbruptCloseStreamer_WithAutoReconnect(t *testing.T) {
+	sw := newStreamWrapper()
+	sw.EnableAutoReconnect(200 * time.Millisecond)
+
+	defer sw.DisableAutoReconnect()
+
+	rq := simplejson.New()
+	rq.Set("method", "CLOSE_ABRUPT")
+	rq.Set("id", "abrupt-close")
+	rq.SetPath([]string{"params", "restart"}, 500)
+
+	resp, err := sw.Call(rq)
+	assert.Error(t, err, "should return error due to abrupt close")
+	assert.Nil(t, resp)
+
+	ok := waitUntilConnected(sw, 10, 300*time.Millisecond)
+	assert.True(t, ok, "should auto-reconnect after CLOSE_ABRUPT with restart")
+}
+
+func waitUntilConnected(sw *streamer.StreamWrapper, maxAttempts int, delay time.Duration) bool {
+	for i := 0; i < maxAttempts; i++ {
+		time.Sleep(delay)
+		rq := simplejson.New()
+		rq.Set("method", "LIST_SUBSCRIPTIONS")
+		rq.Set("id", fmt.Sprintf("auto-recheck-%d", i))
+
+		if _, err := sw.Call(rq); err == nil {
+			return true
+		}
+	}
+	return false
+}

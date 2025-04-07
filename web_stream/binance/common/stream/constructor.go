@@ -45,3 +45,41 @@ func New(
 		mu:          sync.Mutex{},
 	}
 }
+
+func (sw *StreamWrapper) EnableAutoReconnect(interval ...time.Duration) *StreamWrapper {
+	sw.autoReconnect = true
+	if interval == nil {
+		interval = append(interval, sw.reconnectInterval)
+	}
+	sw.reconnectInterval = interval[0]
+	sw.reconnectStopChan = make(chan struct{})
+
+	go func() {
+		for {
+			select {
+			case <-sw.reconnectStopChan:
+				return
+			default:
+				if sw.low_stream == nil || !sw.low_stream.GetLoopStarted() {
+					logrus.Warn("🔁 Attempting reconnect...")
+					if err := sw.Reconnect(); err != nil {
+						logrus.Warnf("Reconnect failed: %v", err)
+						time.Sleep(sw.reconnectInterval)
+						continue
+					}
+					logrus.Info("✅ Reconnected successfully")
+				}
+				time.Sleep(sw.reconnectInterval)
+			}
+		}
+	}()
+	return sw
+}
+
+func (sw *StreamWrapper) DisableAutoReconnect() *StreamWrapper {
+	if sw.reconnectStopChan != nil {
+		close(sw.reconnectStopChan)
+	}
+	sw.autoReconnect = false
+	return sw
+}
