@@ -10,6 +10,7 @@ import (
 	"time"
 
 	streamer "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
+	"github.com/sirupsen/logrus"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/fr0ster/turbo-restler/web_socket"
@@ -39,6 +40,7 @@ func startGlobalMockServer() (*httptest.Server, string) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
+			logrus.Errorf("Upgrade error: %v", err)
 			return
 		}
 		defer conn.Close()
@@ -46,9 +48,16 @@ func startGlobalMockServer() (*httptest.Server, string) {
 		for {
 			_, msg, err := conn.ReadMessage()
 			if err != nil {
+				logrus.Warnf("Read error: %v", err)
 				break
 			}
-			req, _ := simplejson.NewJson(msg)
+
+			req, err := simplejson.NewJson(msg)
+			if err != nil {
+				logrus.Warn("Invalid JSON received")
+				continue
+			}
+
 			id := req.Get("id").MustString()
 			method := req.Get("method").MustString()
 
@@ -63,7 +72,19 @@ func startGlobalMockServer() (*httptest.Server, string) {
 			case "LIST_SUBSCRIPTIONS":
 				resp.Set("result", []string{"btcusdt@aggTrade"})
 			case "UNKNOWN_METHOD":
+				logrus.Info("🤐 Simulating timeout: no response sent")
 				time.Sleep(2 * time.Second)
+				continue // без відповіді
+			case "CLOSE_GRACEFUL":
+				logrus.Info("🔌 Graceful close requested by client")
+				time.Sleep(100 * time.Millisecond)
+				conn.WriteMessage(websocket.CloseMessage,
+					websocket.FormatCloseMessage(websocket.CloseNormalClosure, "bye"))
+				return
+			case "CLOSE_ABRUPT":
+				logrus.Info("💥 Abrupt close requested by client")
+				conn.Close() // emulate crash
+				return
 			default:
 				resp.Set("error", "unknown method")
 			}
@@ -72,12 +93,13 @@ func startGlobalMockServer() (*httptest.Server, string) {
 			conn.WriteMessage(websocket.TextMessage, b)
 		}
 	}))
+
 	host := strings.TrimPrefix(s.URL, "http://")
 	return s, host
 }
 
 func newStreamWrapper() *streamer.StreamWrapper {
-	return streamer.New(web_socket.WsHost(testHost), "/ws", "ws", true)
+	return streamer.New(web_socket.WsHost(testHost), "/ws", "ws", false)
 }
 
 // ----------------------------
@@ -160,12 +182,40 @@ func TestAddRemoveHandler(t *testing.T) {
 		called = true
 	})
 
-	// err := sw.Subscribe("btcusdt@aggTrade")
-	// assert.NoError(t, err)
-	// assert.True(t, called, "Handler should be called")
-	// time.Sleep(1 * time.Second)
+	err := sw.Subscribe("btcusdt@aggTrade")
+	assert.NoError(t, err)
+	assert.True(t, called, "Handler should be called")
+	time.Sleep(1 * time.Second)
 
 	sw.RemoveHandler("my-handler")
 	called = sw.GetLoopStarted()
 	assert.False(t, called, "Handler should be removed")
+}
+
+func TestGracefulCloseStreamer(t *testing.T) {
+	sw := newStreamWrapper()
+
+	rq := simplejson.New()
+	rq.Set("method", "CLOSE_GRACEFUL")
+	rq.Set("id", "graceful-close")
+
+	resp, err := sw.Call(rq)
+
+	assert.Error(t, err, "should return error due to closed connection")
+	assert.Nil(t, resp, "no response expected on graceful close")
+	assert.Contains(t, err.Error(), "close", "error should mention closed connection")
+}
+
+func TestAbruptCloseStreamer(t *testing.T) {
+	sw := newStreamWrapper()
+
+	rq := simplejson.New()
+	rq.Set("method", "CLOSE_ABRUPT")
+	rq.Set("id", "abrupt-close")
+
+	resp, err := sw.Call(rq)
+
+	assert.Error(t, err, "should return error due to abrupt close")
+	assert.Nil(t, resp, "no response expected on abrupt close")
+	assert.Contains(t, err.Error(), "close", "error should mention closed connection")
 }

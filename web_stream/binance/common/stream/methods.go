@@ -91,34 +91,42 @@ func (ws *StreamWrapper) Unsubscribe(subscriptions ...string) (err error) {
 func (ws *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	id := rq.Get("id").MustString()
 	resultC := make(chan *simplejson.Json, 1)
+	errorC := make(chan error, 1)
 
-	// додай handler
+	// Встановлюємо тимчасовий handler для помилок
+	ws.low_stream.SetErrHandler(func(err error) error {
+		select {
+		case errorC <- err:
+		default:
+		}
+		return err
+	})
+
 	ws.AddHandler(id, func(response *simplejson.Json) {
 		if response.Get("id").MustString() == id {
-			// 🔥 неблокуючий запис у канал
 			select {
 			case resultC <- response:
 			default:
 			}
 		}
 	})
-	// defer ws.RemoveHandler(id)
+	defer ws.RemoveHandler(id)
 
-	// відправлення
 	if err := ws.low_stream.Send(rq); err != nil {
 		return nil, fmt.Errorf("send error: %w", err)
 	}
 
-	// очікування
 	select {
 	case resp := <-resultC:
-		ws.RemoveHandler(id) // видалити handler
 		if resp == nil {
 			return nil, fmt.Errorf("nil response")
 		}
 		return resp, nil
+
+	case err := <-errorC:
+		return nil, fmt.Errorf("read error: %w", err)
+
 	case <-time.After(ws.timeOut):
-		ws.RemoveHandler(id) // видалити handler
 		return nil, fmt.Errorf("timeout")
 	}
 }
