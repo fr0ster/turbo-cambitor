@@ -46,40 +46,55 @@ func New(
 	}
 }
 
-func (sw *StreamWrapper) EnableAutoReconnect(interval ...time.Duration) *StreamWrapper {
-	sw.autoReconnect = true
-	if interval == nil {
-		interval = append(interval, sw.reconnectInterval)
+func (sw *StreamWrapper) SetMaxReconnectAttempts(n int) *StreamWrapper {
+	sw.maxReconnectAttempts = n
+	return sw
+}
+
+func (ws *StreamWrapper) EnableAutoReconnect(interval ...time.Duration) *StreamWrapper {
+	ws.autoReconnect = true
+	ws.stopOnce = sync.Once{} // ⚠️ обнуляємо, щоби `Disable...` можна було викликати знов
+
+	if len(interval) > 0 {
+		ws.reconnectInterval = interval[0]
 	}
-	sw.reconnectInterval = interval[0]
-	sw.reconnectStopChan = make(chan struct{})
+
+	ws.reconnectStopChan = make(chan struct{})
 
 	go func() {
 		for {
 			select {
-			case <-sw.reconnectStopChan:
+			case <-ws.reconnectStopChan:
 				return
 			default:
-				if sw.low_stream == nil || !sw.low_stream.GetLoopStarted() {
-					logrus.Warn("🔁 Attempting reconnect...")
-					if err := sw.Reconnect(); err != nil {
-						logrus.Warnf("Reconnect failed: %v", err)
-						time.Sleep(sw.reconnectInterval)
-						continue
-					}
-					logrus.Info("✅ Reconnected successfully")
+				logrus.Warn("🔁 Attempting reconnect...")
+				if err := ws.Reconnect(); err != nil {
+					logrus.Warnf("Reconnect failed: %v", err)
+					time.Sleep(ws.reconnectInterval)
+					continue
 				}
-				time.Sleep(sw.reconnectInterval)
+				logrus.Info("✅ Reconnected successfully")
 			}
+			time.Sleep(ws.reconnectInterval)
 		}
 	}()
-	return sw
+
+	return ws
 }
 
-func (sw *StreamWrapper) DisableAutoReconnect() *StreamWrapper {
-	if sw.reconnectStopChan != nil {
-		close(sw.reconnectStopChan)
-	}
-	sw.autoReconnect = false
-	return sw
+func (ws *StreamWrapper) DisableAutoReconnect() {
+	ws.autoReconnect = false
+	ws.stopOnce.Do(func() {
+		if ws.reconnectStopChan != nil {
+			close(ws.reconnectStopChan)
+		}
+	})
+}
+
+func (sw *StreamWrapper) GetConnection() *web_socket.WebSocketWrapper {
+	return sw.low_stream
+}
+
+func (sw *StreamWrapper) IsLoopStarted() bool {
+	return sw.low_stream != nil && sw.low_stream.GetLoopStarted()
 }

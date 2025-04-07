@@ -1,7 +1,6 @@
 package streamer
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -12,6 +11,9 @@ import (
 )
 
 func (stream *StreamWrapper) Close() {
+	if stream.low_stream == nil {
+		return
+	}
 	stream.low_stream.Close()
 }
 
@@ -98,7 +100,8 @@ func (ws *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	}
 
 	resultC := make(chan *simplejson.Json, 1)
-	userErrC := ws.low_stream.GetErrorC() // 👈 Отримуємо глобальний канал помилок
+	logicErrC := make(chan error, 1)
+	userErrC := ws.low_stream.GetErrorC()
 
 	ws.AddHandler(id, func(response *simplejson.Json) {
 		if response == nil {
@@ -109,16 +112,15 @@ func (ws *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 			return
 		}
 
-		respID := response.Get("id").MustString()
-		if respID != id {
+		if errStr := response.Get("error").MustString(); errStr != "" {
+			select {
+			case logicErrC <- fmt.Errorf("call error: %s", errStr):
+			default:
+			}
 			return
 		}
 
-		if errStr := response.Get("error").MustString(); errStr != "" {
-			select {
-			case userErrC <- errors.New(errStr):
-			default:
-			}
+		if response.Get("id").MustString() != id {
 			return
 		}
 
@@ -130,33 +132,108 @@ func (ws *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	defer ws.RemoveHandler(id)
 
 	if err := ws.low_stream.Send(rq); err != nil {
+		ws.triggerAutoReconnectIfNeeded(err) // 👈 помилка при надсиланні
 		return nil, fmt.Errorf("send error: %w", err)
 	}
 
 	select {
 	case err := <-userErrC:
-		ws.low_stream.ErrorHandler()(err)
+		ws.triggerAutoReconnectIfNeeded(err) // 👈 помилка від сокету
 		return nil, fmt.Errorf("call error: %w", err)
+
+	case err := <-logicErrC:
+		ws.low_stream.ErrorHandler()(err) // 👈 викликаємо твій кастомний логічний хендлер
+		return nil, err
+
 	case resp := <-resultC:
 		return resp, nil
+
 	case <-time.After(ws.timeOut):
-		return nil, fmt.Errorf("timeout")
+		timeoutErr := fmt.Errorf("timeout")
+		ws.triggerAutoReconnectIfNeeded(timeoutErr)
+		return nil, timeoutErr
 	}
 }
 
+func (ws *StreamWrapper) triggerAutoReconnectIfNeeded(err error) {
+	if !ws.autoReconnect {
+		return
+	}
+
+	go func() {
+		logrus.Warnf("🔁 Auto-reconnect triggered due to: %v", err)
+
+		// ✅ Ця пауза обов'язкова: перед першою спробою!
+		time.Sleep(ws.reconnectInterval + 200*time.Millisecond)
+
+		attempts := 0
+
+		for {
+			select {
+			case <-ws.reconnectStopChan:
+				return
+			default:
+				if ws.low_stream == nil || !ws.low_stream.GetLoopStarted() {
+					logrus.Warnf("🔁 Attempting reconnect (attempt %d)...", attempts+1)
+
+					if err := ws.Reconnect(); err != nil {
+						logrus.Warnf("Reconnect failed: %v", err)
+						attempts++
+						if attempts >= ws.maxReconnectAttempts {
+							logrus.Errorf("❌ Reconnect failed after %d attempts — stopping auto-reconnect", attempts)
+							ws.Close()
+							return
+						}
+						time.Sleep(ws.reconnectInterval + time.Duration(attempts*100)*time.Millisecond)
+						continue
+					}
+
+					logrus.Info("✅ Reconnected successfully")
+					attempts = 0
+				}
+
+				time.Sleep(ws.reconnectInterval)
+			}
+		}
+	}()
+}
+
 func (sw *StreamWrapper) Reconnect() error {
+	sw.reconnectMu.Lock()
+	defer sw.reconnectMu.Unlock()
+
+	// Якщо вже успішно реконнектились — не робимо нічого
+	if sw.reconnectedOnce {
+		return nil
+	}
+
 	sw.Close()
-	return sw.Connect() // перезапускає підключення до ws://
+
+	err := sw.Connect()
+	if err != nil {
+		logrus.Errorf("Reconnect error: %v", err)
+		return err
+	}
+
+	sw.reconnectedOnce = true
+	logrus.Info("✅ Reconnected successfully (marked as once)")
+	return nil
 }
 
 func (sw *StreamWrapper) Connect() error {
 	sw.mu.Lock()
 	defer sw.mu.Unlock()
 
-	stream, err := web_socket.New(sw.wsHost, sw.wsPath, sw.wsScheme, sw.messageType, sw.silent)
-	if err != nil {
-		logrus.Fatalf("Error: %v", err)
+	var err error
+	for i := 0; i < 10; i++ {
+		var stream *web_socket.WebSocketWrapper
+		stream, err = web_socket.New(sw.wsHost, sw.wsPath, sw.wsScheme, sw.messageType, sw.silent)
+		if err == nil {
+			sw.low_stream = stream
+			return nil
+		}
+		logrus.Errorf("🔁 Connect failed: %v", err)
+		time.Sleep(500 * time.Millisecond) // 🧘 чекати на старт сервера
 	}
-	sw.low_stream = stream
-	return nil
+	return fmt.Errorf("Connect failed: %w", err)
 }

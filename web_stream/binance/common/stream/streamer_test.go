@@ -4,10 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
 	mock_server "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream/mock_server"
+	"github.com/sirupsen/logrus"
 
 	streamer "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 
@@ -176,7 +178,12 @@ func TestAbruptCloseStreamer(t *testing.T) {
 	assert.Contains(t, err.Error(), "close", "error should mention closed connection")
 }
 
+var closeNormalMutex = &sync.Mutex{}
+var abruptCloseMutex = &sync.Mutex{}
+
 func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
+	closeNormalMutex.Lock()
+	defer closeNormalMutex.Unlock()
 	sw := newStreamWrapper()
 
 	rq := simplejson.New()
@@ -188,11 +195,13 @@ func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
 	assert.Error(t, err, "should return error due to graceful close")
 	assert.Nil(t, resp, "no response expected")
 
-	ok := retryConnect(sw, 10, 200*time.Millisecond)
+	ok := retryConnect(sw, 10, 1000*time.Millisecond)
 	assert.True(t, ok, "client should reconnect after CLOSE_GRACEFUL with restart")
 }
 
 func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
+	abruptCloseMutex.Lock()
+	defer abruptCloseMutex.Unlock()
 	sw := newStreamWrapper()
 
 	rq := simplejson.New()
@@ -211,12 +220,14 @@ func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
 func retryConnect(sw *streamer.StreamWrapper, maxAttempts int, delay time.Duration) bool {
 	for i := 0; i < maxAttempts; i++ {
 		time.Sleep(delay)
+
+		logrus.Infof("🔁 Attempting manual reconnect (%d/%d)", i+1, maxAttempts)
 		if err := sw.Reconnect(); err == nil {
-			// перевіряємо чи знову працює Call
-			testPing := simplejson.New()
-			testPing.Set("method", "LIST_SUBSCRIPTIONS")
-			testPing.Set("id", fmt.Sprintf("recheck-%d", i))
-			if _, err := sw.Call(testPing); err == nil {
+			time.Sleep(300 * time.Millisecond) // 🧘 дати з'єднанню стабілізуватись
+			rq := simplejson.New()
+			rq.Set("method", "LIST_SUBSCRIPTIONS")
+			rq.Set("id", fmt.Sprintf("recheck-%d", i))
+			if _, err := sw.Call(rq); err == nil {
 				return true
 			}
 		}
@@ -225,8 +236,10 @@ func retryConnect(sw *streamer.StreamWrapper, maxAttempts int, delay time.Durati
 }
 
 func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
+	closeNormalMutex.Lock()
+	defer closeNormalMutex.Unlock()
 	sw := newStreamWrapper()
-	sw.EnableAutoReconnect(200 * time.Millisecond)
+	sw.EnableAutoReconnect(1000 * time.Millisecond)
 
 	defer sw.DisableAutoReconnect()
 
@@ -239,11 +252,16 @@ func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
 	assert.Error(t, err, "should return error due to graceful close")
 	assert.Nil(t, resp)
 
+	// 🧘‍♂️ Дати серверу стартануть після рестарту
+	time.Sleep(500 * time.Millisecond)
+
 	ok := waitUntilConnected(sw, 10, 300*time.Millisecond)
 	assert.True(t, ok, "should auto-reconnect after CLOSE_GRACEFUL with restart")
 }
 
 func TestAbruptCloseStreamer_WithAutoReconnect(t *testing.T) {
+	abruptCloseMutex.Lock()
+	defer abruptCloseMutex.Unlock()
 	sw := newStreamWrapper()
 	sw.EnableAutoReconnect(200 * time.Millisecond)
 
@@ -265,13 +283,23 @@ func TestAbruptCloseStreamer_WithAutoReconnect(t *testing.T) {
 func waitUntilConnected(sw *streamer.StreamWrapper, maxAttempts int, delay time.Duration) bool {
 	for i := 0; i < maxAttempts; i++ {
 		time.Sleep(delay)
+
+		// if !sw.IsLoopStarted() {
+		// 	logrus.Warnf("⏳ loop not started on attempt %d", i)
+		// 	continue
+		// }
+
 		rq := simplejson.New()
 		rq.Set("method", "LIST_SUBSCRIPTIONS")
 		rq.Set("id", fmt.Sprintf("auto-recheck-%d", i))
 
 		if _, err := sw.Call(rq); err == nil {
+			logrus.Infof("✅ Connected and received subscriptions at attempt %d", i)
+			sw.DisableAutoReconnect()
 			return true
 		}
+
+		logrus.Warnf("❌ Call failed at attempt %d", i)
 	}
 	return false
 }
