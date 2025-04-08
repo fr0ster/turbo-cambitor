@@ -21,13 +21,13 @@ func StartReusableMockServer(port int) {
 	mockServerMu.Lock()
 	defer mockServerMu.Unlock()
 
-	addr := fmt.Sprintf(":%d", port)
-
+	// Якщо сервер уже живий і слухає — нічого не робимо
 	if currentSrv != nil {
-		logrus.Warnf("🖑 Stopping existing server on port %d", port)
-		_ = currentSrv.Close()
-		time.Sleep(200 * time.Millisecond)
+		logrus.Infof("☑️ Mock server on port %d is already running", port)
+		return
 	}
+
+	addr := fmt.Sprintf(":%d", port)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +42,10 @@ func StartReusableMockServer(port int) {
 		if err != nil && err != http.ErrServerClosed {
 			logrus.Errorf("Server error: %v", err)
 		}
+		// після завершення обнуляємо currentSrv
+		mockServerMu.Lock()
+		currentSrv = nil
+		mockServerMu.Unlock()
 	}()
 }
 
@@ -55,6 +59,9 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request, port int)
 	defer conn.Close()
 
 	stopChan := make(chan struct{})
+	pingPongStopChan := make(chan struct{})
+	pingPongActive := false
+
 	go startPinger(conn, stopChan)
 
 	for {
@@ -108,6 +115,15 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request, port int)
 			conn.WriteMessage(websocket.TextMessage, b)
 			mockServerMu.Unlock()
 			continue
+		case "PONG_CONTROL":
+			timeout := req.Get("params").Get("timeout").MustInt(1000)
+			if !pingPongActive {
+				pingPongActive = true
+				go startNativePingControl(conn, timeout, pingPongStopChan)
+				resp.Set("result", fmt.Sprintf("pong control started with timeout %d ms", timeout))
+			} else {
+				resp.Set("result", "pong control already active")
+			}
 		default:
 			resp.Set("error", "unknown method")
 		}
@@ -119,6 +135,59 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request, port int)
 	}
 
 	close(stopChan)
+	close(pingPongStopChan)
+}
+
+func startNativePingControl(conn *websocket.Conn, timeoutMs int, stopChan chan struct{}) {
+	var lastPong time.Time
+	var lastPongMu sync.Mutex
+
+	lastPong = time.Now()
+
+	conn.SetPongHandler(func(appData string) error {
+		logrus.Infof("📥 Received PONG: %s", appData)
+		lastPongMu.Lock()
+		lastPong = time.Now()
+		lastPongMu.Unlock()
+		return nil
+	})
+
+	ticker := time.NewTicker(time.Duration(timeoutMs) * time.Millisecond)
+	defer ticker.Stop()
+
+	logrus.Infof("🏓 Native ping-pong control started with timeout %d ms", timeoutMs)
+
+	for {
+		select {
+		case <-ticker.C:
+			// Перевіряємо останній pong
+			lastPongMu.Lock()
+			since := time.Since(lastPong)
+			lastPongMu.Unlock()
+
+			if since > time.Duration(timeoutMs)*time.Millisecond {
+				logrus.Warn("⏱ Pong timeout reached, closing connection")
+				_ = conn.WriteControl(websocket.CloseMessage,
+					websocket.FormatCloseMessage(1008, "Pong timeout"),
+					time.Now().Add(1*time.Second))
+				return
+			}
+
+			// надсилаємо ping
+			mockServerMu.Lock()
+			err := conn.WriteMessage(websocket.PingMessage, nil)
+			mockServerMu.Unlock()
+
+			if err != nil {
+				logrus.Warnf("❌ Failed to send ping: %v", err)
+				return
+			}
+
+		case <-stopChan:
+			logrus.Infof("🛑 Native ping-pong stopped")
+			return
+		}
+	}
 }
 
 func handleClose(conn *websocket.Conn, stopChan chan struct{}, restartAfter, port int, reason string, code int) {

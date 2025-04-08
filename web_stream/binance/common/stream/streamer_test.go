@@ -303,3 +303,38 @@ func waitUntilConnected(sw *streamer.StreamWrapper, maxAttempts int, delay time.
 	}
 	return false
 }
+
+func TestAddRemoveHandlerWithPongControl(t *testing.T) {
+	sw := newStreamWrapper()
+
+	// sw.SetPingHandler(func(appData string) error {
+	// 	t.Logf("📡 Got ping from server: %s", appData)
+	// 	return sw.GetConnection().WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(time.Second))
+	// })
+
+	sw.SetPingHandler()
+
+	rq := simplejson.New()
+	rq.Set("method", "PONG_CONTROL")
+	rq.Set("id", "ping_control")
+	rq.SetPath([]string{"params", "timeout"}, 500) // це міллісекунди
+
+	resp, err := sw.Call(rq)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+
+	called := false
+	sw.AddHandler("ping_control", func(js *simplejson.Json) {
+		logrus.Infof("Ping control handler called, data: %s", js)
+	})
+	// sw.StartLoop()
+
+	err = sw.Subscribe("btcusdt@aggTrade")
+	assert.NoError(t, err)
+	assert.True(t, called, "Handler should be called")
+	time.Sleep(1 * time.Second)
+
+	sw.RemoveHandler("ping_control")
+	called = sw.GetLoopStarted()
+	assert.False(t, called, "Handler should be removed")
+}

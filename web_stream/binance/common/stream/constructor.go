@@ -98,3 +98,13 @@ func (sw *StreamWrapper) GetConnection() *web_socket.WebSocketWrapper {
 func (sw *StreamWrapper) IsLoopStarted() bool {
 	return sw.low_stream != nil && sw.low_stream.GetLoopStarted()
 }
+
+func (sw *StreamWrapper) SetPongHandler(handler ...func(appData string) error) *StreamWrapper {
+	sw.low_stream.SetPongHandler(handler...)
+	return sw
+}
+
+func (sw *StreamWrapper) SetPingHandler(handler ...func(appData string) error) *StreamWrapper {
+	sw.low_stream.SetPingHandler(handler...)
+	return sw
+}
