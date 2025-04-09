@@ -3,7 +3,7 @@ package common_web_stream
 import (
 	"sync"
 
-	"github.com/fr0ster/turbo-restler/web_socket"
+	"github.com/gorilla/websocket"
 )
 
 func (wa *WebStream) Lock() {
@@ -14,10 +14,7 @@ func (wa *WebStream) Unlock() {
 	wa.mutex.Unlock()
 }
 
-func New(host web_socket.WsHost, silent ...bool) *WebStream {
-	if len(silent) == 0 {
-		silent = append(silent, false)
-	}
+func New(conn *websocket.Conn) *WebStream {
 	return &WebStream{
 		symbol: "",
 		waHost: host,

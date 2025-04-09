@@ -5,118 +5,88 @@ import (
 	"strings"
 
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
-
 	"github.com/fr0ster/turbo-restler/web_socket"
+	"github.com/gorilla/websocket"
 )
 
-func (wa *WebStream) Klines(interval string) *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@kline_" + interval)
-	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+type WebStream struct {
+	scheme stream.WsScheme
+	waHost stream.WsHost
+	symbol string
+	wsPath stream.WsPath
 }
 
-func (wa *WebStream) ContinuousKlines(interval string, contractType string) *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + strings.ToLower(contractType) + "@continuousKline_" + interval)
-	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
-}
-
-func (wa *WebStream) PartialBookDepths(level DepthStreamLevel, rates ...DepthStreamRate) *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		if len(rates) == 0 {
-			wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)) + "@" + strconv.Itoa(int(rates[0])) + "ms")
-		} else {
-			wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)))
+func (wa *WebStream) makeStream(path string) stream.StreamInterface {
+	wa.wsPath = stream.WsPath(path)
+	factory := func() (web_socket.WebSocketInterface, error) {
+		url := string(wa.scheme) + "://" + string(wa.waHost) + string(wa.wsPath)
+		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+		if err != nil {
+			return nil, err
 		}
+		return web_socket.NewWebSocketWrapper(conn), nil
 	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+	return stream.NewStreamWrapper(factory, wa.wsPath).SetSymbol(wa.symbol)
 }
 
-func (wa *WebStream) DiffBookDepths(rates ...DepthStreamRate) *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		if len(rates) == 0 {
-			wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@depth" + "@" + strconv.Itoa(int(rates[0])) + "ms")
-		} else {
-			wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@depth")
-		}
+func (wa *WebStream) Klines(interval string) stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@kline_" + interval)
+}
+
+func (wa *WebStream) ContinuousKlines(interval, contractType string) stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + strings.ToLower(contractType) + "@continuousKline_" + interval)
+}
+
+func (wa *WebStream) PartialBookDepths(level DepthStreamLevel, rates ...DepthStreamRate) stream.StreamInterface {
+	if len(rates) > 0 {
+		return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)) + "@" + strconv.Itoa(int(rates[0])) + "ms")
 	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)))
 }
 
-func (wa *WebStream) AggTrades() *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@aggTrade")
+func (wa *WebStream) DiffBookDepths(rates ...DepthStreamRate) stream.StreamInterface {
+	if len(rates) > 0 {
+		return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth@" + strconv.Itoa(int(rates[0])) + "ms")
 	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth")
 }
 
-func (wa *WebStream) Trades() *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@Trade")
-	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+func (wa *WebStream) AggTrades() stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@aggTrade")
 }
 
-func (wa *WebStream) BookTickers() *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@bookTicker")
-	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+func (wa *WebStream) Trades() stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@trade")
 }
 
-func (wa *WebStream) Tickers() *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@ticker")
-	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+func (wa *WebStream) BookTickers() stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@bookTicker")
 }
 
-func (wa *WebStream) MiniTickers() *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@miniTicker")
-	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+func (wa *WebStream) Tickers() stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@ticker")
 }
 
-func (wa *WebStream) UserData(listenKey string) *stream.StreamWrapper {
-	return stream.New(wa.waHost, web_socket.WsPath("/"+listenKey), web_socket.SchemeWSS, wa.silent)
+func (wa *WebStream) MiniTickers() stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@miniTicker")
 }
 
-func (wa *WebStream) MarkPrice() *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@markPrice")
-	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+func (wa *WebStream) UserData(listenKey string) stream.StreamInterface {
+	return wa.makeStream("/" + listenKey)
 }
 
-func (wa *WebStream) LiquidationOrder() *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "@forceOrder")
-	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+func (wa *WebStream) MarkPrice() stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@markPrice")
 }
 
-func (wa *WebStream) ContractInfo() *stream.StreamWrapper {
-	var wsPath web_socket.WsPath
-	if wa.symbol != "" {
-		wsPath = web_socket.WsPath("/" + strings.ToLower(wa.symbol) + "!contractInfo")
-	}
-	return stream.New(wa.waHost, wsPath, web_socket.SchemeWSS, wa.silent)
+func (wa *WebStream) LiquidationOrder() stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@forceOrder")
 }
 
-func (wa *WebStream) Stream() *stream.StreamWrapper {
-	return stream.New(wa.waHost, "", web_socket.SchemeWSS, wa.silent)
+func (wa *WebStream) ContractInfo() stream.StreamInterface {
+	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "!contractInfo")
+}
+
+func (wa *WebStream) Stream() stream.StreamInterface {
+	return wa.makeStream("")
 }

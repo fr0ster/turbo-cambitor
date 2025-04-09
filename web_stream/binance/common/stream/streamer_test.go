@@ -9,7 +9,6 @@ import (
 	"time"
 
 	mock_server "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream/mock_server"
-	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 
 	streamer "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
@@ -168,6 +167,15 @@ func TestGracefulCloseStreamer(t *testing.T) {
 func TestAbruptCloseStreamer(t *testing.T) {
 	sw := newStreamWrapper()
 
+	sw.GetConnection().SetCloseHandler(func(code int, text string) error {
+		logrus.Infof("Abrupt close handler called with code: %d, text: %s", code, text)
+		return nil
+	})
+	sw.SetErrHandler(func(err error) error {
+		logrus.Infof("Error handler called with error: %v", err)
+		return nil
+	})
+
 	rq := simplejson.New()
 	rq.Set("method", "CLOSE_ABRUPT")
 	rq.Set("id", "abrupt-close")
@@ -179,68 +187,75 @@ func TestAbruptCloseStreamer(t *testing.T) {
 	assert.Contains(t, err.Error(), "close", "error should mention closed connection")
 }
 
-var closeNormalMutex = &sync.Mutex{}
-var abruptCloseMutex = &sync.Mutex{}
+var closeMutex = &sync.Mutex{}
 
 func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
-	closeNormalMutex.Lock()
-	defer closeNormalMutex.Unlock()
-	sw := newStreamWrapper()
+	closeMutex.Lock()
+	defer closeMutex.Unlock()
+	func() {
+		sw := newStreamWrapper()
 
-	rq := simplejson.New()
-	rq.Set("method", "CLOSE_GRACEFUL")
-	rq.Set("id", "graceful-close")
-	rq.SetPath([]string{"params", "restart"}, 500)
+		rq := simplejson.New()
+		rq.Set("method", "CLOSE_GRACEFUL")
+		rq.Set("id", "graceful-close")
+		rq.SetPath([]string{"params", "restart"}, 500)
 
-	resp, err := sw.Call(rq)
-	assert.Error(t, err, "should return error due to graceful close")
-	assert.Nil(t, resp, "no response expected")
+		resp, err := sw.Call(rq)
+		assert.Error(t, err, "should return error due to graceful close")
+		assert.Nil(t, resp, "no response expected")
 
-	ok := retryConnect(sw, 10, 1000*time.Millisecond)
-	assert.True(t, ok, "client should reconnect after CLOSE_GRACEFUL with restart")
+		err = sw.Reconnect(10, 1000*time.Millisecond)
+		assert.True(t, err == nil, "client should reconnect after CLOSE_GRACEFUL with restart")
+	}()
+	func() {
+		sw := newStreamWrapper()
+		rq := simplejson.New()
+		rq.Set("method", "LIST_SUBSCRIPTIONS")
+		rq.Set("id", "test-id")
+
+		resp, err := sw.Call(rq)
+		assert.NoError(t, err)
+		assert.Equal(t, "test-id", resp.Get("id").MustString())
+		assert.Equal(t, []interface{}{"btcusdt@aggTrade"}, resp.Get("result").MustArray())
+	}()
 }
 
 func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
-	abruptCloseMutex.Lock()
-	defer abruptCloseMutex.Unlock()
-	sw := newStreamWrapper()
+	closeMutex.Lock()
+	defer closeMutex.Unlock()
+	func() {
+		sw := newStreamWrapper()
 
-	rq := simplejson.New()
-	rq.Set("method", "CLOSE_ABRUPT")
-	rq.Set("id", "abrupt-close")
-	rq.SetPath([]string{"params", "restart"}, 500)
+		rq := simplejson.New()
+		rq.Set("method", "CLOSE_ABRUPT")
+		rq.Set("id", "abrupt-close")
+		rq.SetPath([]string{"params", "restart"}, 500)
 
-	resp, err := sw.Call(rq)
-	assert.Error(t, err, "should return error due to abrupt close")
-	assert.Nil(t, resp, "no response expected")
+		resp, err := sw.Call(rq)
+		assert.Error(t, err, "should return error due to abrupt close")
+		assert.Nil(t, resp, "no response expected")
 
-	ok := retryConnect(sw, 10, 200*time.Millisecond)
-	assert.True(t, ok, "client should reconnect after CLOSE_ABRUPT with restart")
-}
+		err = sw.Reconnect(10, 200*time.Millisecond)
+		assert.True(t, err == nil, "client should reconnect after CLOSE_ABRUPT with restart")
+	}()
+	func() {
+		sw := newStreamWrapper()
+		rq := simplejson.New()
+		rq.Set("method", "LIST_SUBSCRIPTIONS")
+		rq.Set("id", "test-id")
 
-func retryConnect(sw *streamer.StreamWrapper, maxAttempts int, delay time.Duration) bool {
-	for i := 0; i < maxAttempts; i++ {
-		time.Sleep(delay)
-
-		logrus.Infof("🔁 Attempting manual reconnect (%d/%d)", i+1, maxAttempts)
-		if err := sw.Reconnect(); err == nil {
-			time.Sleep(300 * time.Millisecond) // 🧘 дати з'єднанню стабілізуватись
-			rq := simplejson.New()
-			rq.Set("method", "LIST_SUBSCRIPTIONS")
-			rq.Set("id", fmt.Sprintf("recheck-%d", i))
-			if _, err := sw.Call(rq); err == nil {
-				return true
-			}
-		}
-	}
-	return false
+		resp, err := sw.Call(rq)
+		assert.NoError(t, err)
+		assert.Equal(t, "test-id", resp.Get("id").MustString())
+		assert.Equal(t, []interface{}{"btcusdt@aggTrade"}, resp.Get("result").MustArray())
+	}()
 }
 
 func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
-	closeNormalMutex.Lock()
-	defer closeNormalMutex.Unlock()
+	closeMutex.Lock()
+	defer closeMutex.Unlock()
 	sw := newStreamWrapper()
-	sw.EnableAutoReconnect(1000 * time.Millisecond)
+	sw.SetMaxReconnectAttempts(3).SetReconnectInterval(200 * time.Millisecond).EnableAutoReconnect()
 
 	defer sw.DisableAutoReconnect()
 
@@ -261,10 +276,10 @@ func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
 }
 
 func TestAbruptCloseStreamer_WithAutoReconnect(t *testing.T) {
-	abruptCloseMutex.Lock()
-	defer abruptCloseMutex.Unlock()
+	closeMutex.Lock()
+	defer closeMutex.Unlock()
 	sw := newStreamWrapper()
-	sw.EnableAutoReconnect(200 * time.Millisecond)
+	sw.SetMaxReconnectAttempts(3).SetReconnectInterval(200 * time.Millisecond).EnableAutoReconnect()
 
 	defer sw.DisableAutoReconnect()
 
@@ -310,7 +325,7 @@ func TestAddRemoveHandlerWithPongControl(t *testing.T) {
 
 	sw.SetPingHandler(func(appData string) error {
 		t.Logf("📡 Got ping from server: %s", appData)
-		return sw.GetConnection().WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(time.Second))
+		return sw.SendPing(appData)
 	})
 
 	// sw.SetPingHandler()

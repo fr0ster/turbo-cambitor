@@ -1,29 +1,15 @@
 package streamer
 
-import (
-	"sync"
-	"time"
+// WsHost represents the WebSocket host (e.g., "stream.binance.com:9443")
+type WsHost string
 
-	"github.com/fr0ster/turbo-restler/web_socket"
-)
+// WsPath represents the WebSocket path (e.g., "/btcusdt@aggTrade")
+type WsPath string
 
-type (
-	StreamWrapper struct {
-		symbol               string
-		wsHost               web_socket.WsHost
-		wsPath               web_socket.WsPath
-		wsScheme             web_socket.WsScheme
-		messageType          web_socket.MessageType
-		silent               bool
-		low_stream           *web_socket.WebSocketWrapper
-		mu                   sync.Mutex
-		timeOut              time.Duration
-		autoReconnect        bool
-		reconnectInterval    time.Duration
-		reconnectStopChan    chan struct{}
-		reconnectedOnce      bool
-		reconnectMu          sync.Mutex
-		maxReconnectAttempts int
-		stopOnce             sync.Once
-	}
-)
+// WsScheme represents the WebSocket scheme (e.g., "wss")
+type WsScheme string
+
+// Suffix returns the raw path as string
+func (p WsPath) Suffix() string {
+	return string(p)
+}
