@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fr0ster/turbo-cambitor/web_stream/binance/common/common_web_stream"
+	common_web_stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 	"github.com/gorilla/websocket"
 )

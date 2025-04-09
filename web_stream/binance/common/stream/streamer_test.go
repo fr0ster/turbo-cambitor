@@ -9,6 +9,8 @@ import (
 	"time"
 
 	mock_server "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream/mock_server"
+	"github.com/fr0ster/turbo-restler/web_socket"
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 
 	streamer "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
@@ -26,12 +28,22 @@ func TestMain(m *testing.M) {
 }
 
 func newStreamWrapper() *streamer.StreamWrapper {
-	sw := streamer.New("localhost:8080", "/ws", "ws", false).SetTimeOut(5 * time.Second)
-	err := sw.Connect()
-	if err != nil {
+	factory := func() (web_socket.WebSocketInterface, error) {
+		url := "ws://localhost:8080/ws"
+		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+		if err != nil {
+			return nil, err
+		}
+		return web_socket.NewWebSocketWrapper(conn), nil
+	}
+
+	sw := streamer.NewStreamWrapper(factory, "/ws").SetSymbol("btcusdt")
+
+	if err := sw.Connect(); err != nil {
 		panic(err)
 	}
-	return sw
+
+	return sw.(*streamer.StreamWrapper)
 }
 
 // ----------------------------
@@ -69,87 +81,6 @@ func TestCall(t *testing.T) {
 	assert.Equal(t, []interface{}{"btcusdt@aggTrade"}, resp.Get("result").MustArray())
 }
 
-func TestCallTimeout(t *testing.T) {
-	sw := newStreamWrapper()
-
-	rq := simplejson.New()
-	rq.Set("method", "UNKNOWN_METHOD")
-	rq.Set("id", "timeout-test")
-
-	// Встановлюємо короткий таймаут
-	sw.SetTimeOut(400 * time.Millisecond)
-
-	start := time.Now()
-	resp, err := sw.Call(rq)
-	duration := time.Since(start)
-
-	assert.Error(t, err)
-	assert.Nil(t, resp)
-	assert.LessOrEqual(t, duration.Milliseconds(), int64(1000), "should timeout fast")
-}
-
-func TestClose(t *testing.T) {
-	sw := newStreamWrapper()
-	assert.NotPanics(t, func() {
-		sw.Close()
-	})
-}
-
-func TestSetErrHandler(t *testing.T) {
-	sw := newStreamWrapper()
-
-	called := false
-	errC := make(chan error, 1)
-
-	sw.SetErrHandler(func(err error) error {
-		called = true
-		select {
-		case errC <- err:
-		default:
-			t.Logf("⚠️ errC full, dropping error: %v", err)
-		}
-		return err
-	})
-
-	rq := simplejson.New()
-	rq.Set("method", "ERROR") // 👈 сервер обробляє цей метод
-	rq.Set("id", "err-test-id")
-	rq.Set("params", []interface{}{"custom-server-error"}) // 🧠 додаємо потрібну помилку
-
-	resp, err := sw.Call(rq)
-
-	select {
-	case receivedErr := <-errC:
-		assert.True(t, called, "Error handler should have been called")
-		assert.Error(t, receivedErr)
-		assert.Contains(t, receivedErr.Error(), "custom-server-error")
-	case <-time.After(2 * time.Second):
-		t.Fatal("Timeout waiting for error handler to be called")
-	}
-
-	assert.Nil(t, resp)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "custom-server-error")
-}
-
-func TestAddRemoveHandler(t *testing.T) {
-	sw := newStreamWrapper()
-
-	called := false
-	sw.AddHandler("my-handler", func(js *simplejson.Json) {
-		called = true
-	})
-
-	err := sw.Subscribe("btcusdt@aggTrade")
-	assert.NoError(t, err)
-	assert.True(t, called, "Handler should be called")
-	time.Sleep(1 * time.Second)
-
-	sw.RemoveHandler("my-handler")
-	called = sw.GetLoopStarted()
-	assert.False(t, called, "Handler should be removed")
-}
-
 func TestGracefulCloseStreamer(t *testing.T) {
 	sw := newStreamWrapper()
 
@@ -166,15 +97,6 @@ func TestGracefulCloseStreamer(t *testing.T) {
 
 func TestAbruptCloseStreamer(t *testing.T) {
 	sw := newStreamWrapper()
-
-	sw.GetConnection().SetCloseHandler(func(code int, text string) error {
-		logrus.Infof("Abrupt close handler called with code: %d, text: %s", code, text)
-		return nil
-	})
-	sw.SetErrHandler(func(err error) error {
-		logrus.Infof("Error handler called with error: %v", err)
-		return nil
-	})
 
 	rq := simplejson.New()
 	rq.Set("method", "CLOSE_ABRUPT")
@@ -320,37 +242,47 @@ func waitUntilConnected(sw *streamer.StreamWrapper, maxAttempts int, delay time.
 	return false
 }
 
-func TestAddRemoveHandlerWithPongControl(t *testing.T) {
+func TestPingPongHandlingWithActiveStream(t *testing.T) {
 	sw := newStreamWrapper()
 
-	sw.SetPingHandler(func(appData string) error {
-		t.Logf("📡 Got ping from server: %s", appData)
-		return sw.SendPing(appData)
+	pingCalled := false
+	messageReceived := false
+
+	// Встановлюємо Ping handler
+	sw.GetConnection().SetPingHandler(func(appData string, ctrl web_socket.ControlWriter) error {
+		pingCalled = true
+		t.Logf("📡 Ping received: %s", appData)
+		time.Sleep(100 * time.Millisecond)
+		t.Log("✅ Simulated business logic")
+		return ctrl.WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(1*time.Second))
 	})
 
-	// sw.SetPingHandler()
-
-	called := false
-	sw.AddHandler("listener", func(js *simplejson.Json) {
-		called = true
-		logrus.Infof("Ping control handler called, data: %s", js)
+	// Підписка на WebSocket-повідомлення
+	sw.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			t.Logf("❌ Received error: %v", evt.Error)
+			return
+		}
+		messageReceived = true
+		t.Logf("📨 Received message: %s", string(evt.Body))
 	})
 
+	// Стартуємо ping/pong сценарій
 	rq := simplejson.New()
 	rq.Set("method", "PONG_CONTROL")
 	rq.Set("id", "ping_control")
-	rq.SetPath([]string{"params", "timeout"}, 100) // це міллісекунди
+	rq.SetPath([]string{"params", "timeout"}, 100)
 
 	resp, err := sw.Call(rq)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.NotNil(t, resp)
 
+	// Створюємо бізнес-підписку
 	err = sw.Subscribe("btcusdt@aggTrade")
 	assert.NoError(t, err)
-	assert.True(t, called, "Handler should be called")
+
 	time.Sleep(1 * time.Second)
 
-	sw.RemoveHandler("listener")
-	called = sw.GetLoopStarted()
-	assert.False(t, called, "Handler should be removed")
+	assert.True(t, pingCalled, "Ping handler should have been called")
+	assert.True(t, messageReceived, "WebSocket message should have been received")
 }

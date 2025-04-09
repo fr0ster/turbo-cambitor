@@ -18,6 +18,14 @@ type StreamWrapper struct {
 	wsPath  WsPath
 	timeOut time.Duration
 	mu      sync.Mutex
+
+	autoReconnect        bool
+	reconnectStopChan    chan struct{}
+	maxReconnectAttempts int
+	reconnectInterval    time.Duration
+
+	// для контролю паралельного доступу
+	reconnectMu sync.Mutex
 }
 
 // NewStreamWrapper створює новий StreamWrapper з фабрикою сокета
@@ -150,4 +158,65 @@ func (sw *StreamWrapper) SetSymbol(symbol string) StreamInterface {
 
 func (sw *StreamWrapper) GetConnection() web_socket.WebSocketInterface {
 	return sw.socket
+}
+
+func (sw *StreamWrapper) SetMaxReconnectAttempts(n int) StreamInterface {
+	sw.maxReconnectAttempts = n
+	return sw
+}
+
+func (sw *StreamWrapper) SetReconnectInterval(interval time.Duration) StreamInterface {
+	sw.reconnectInterval = interval
+	return sw
+}
+
+func (sw *StreamWrapper) EnableAutoReconnect() StreamInterface {
+	sw.autoReconnect = true
+	sw.reconnectStopChan = make(chan struct{})
+
+	go func() {
+		attempts := 0
+		for {
+			select {
+			case <-sw.reconnectStopChan:
+				return
+			default:
+				// Перевірка на nil з'єднання
+				if sw.socket == nil {
+					goto tryReconnect
+				}
+
+				// Неблокуюча перевірка на закриття WebSocket
+				select {
+				case <-sw.socket.Done():
+					goto tryReconnect
+				default:
+					// з'єднання активне, чекаємо і продовжуємо
+					time.Sleep(sw.reconnectInterval)
+					continue
+				}
+
+			tryReconnect:
+				if attempts >= sw.maxReconnectAttempts {
+					return
+				}
+				if err := sw.Reconnect(1, sw.reconnectInterval); err == nil {
+					attempts = 0
+				} else {
+					attempts++
+				}
+				time.Sleep(sw.reconnectInterval)
+			}
+		}
+	}()
+
+	return sw
+}
+
+func (sw *StreamWrapper) DisableAutoReconnect() {
+	sw.autoReconnect = false
+	if sw.reconnectStopChan != nil {
+		close(sw.reconnectStopChan)
+		sw.reconnectStopChan = nil
+	}
 }

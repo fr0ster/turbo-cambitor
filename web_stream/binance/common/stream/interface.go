@@ -32,4 +32,16 @@ type StreamInterface interface {
 
 	// GetConnection повертає underlying WebSocketInterface, якщо потрібно передати далі
 	GetConnection() web_socket.WebSocketInterface
+
+	// SetMaxReconnectAttempts встановлює максимальну кількість спроб реконекту
+	SetMaxReconnectAttempts(n int) StreamInterface
+
+	// SetReconnectInterval задає інтервал між спробами реконекту
+	SetReconnectInterval(interval time.Duration) StreamInterface
+
+	// EnableAutoReconnect вмикає автоматичний реконект
+	EnableAutoReconnect() StreamInterface
+
+	// DisableAutoReconnect вимикає автоматичний реконект
+	DisableAutoReconnect()
 }
