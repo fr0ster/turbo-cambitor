@@ -9,14 +9,23 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type WebStream struct {
+// NewWebStream створює новий екземпляр StreamBuilder з переданими параметрами.
+func NewStreamBuilder(scheme stream.WsScheme, host stream.WsHost, symbol string) *StreamBuilder {
+	return &StreamBuilder{
+		scheme: scheme,
+		waHost: host,
+		symbol: symbol,
+	}
+}
+
+type StreamBuilder struct {
 	scheme stream.WsScheme
 	waHost stream.WsHost
 	symbol string
 	wsPath stream.WsPath
 }
 
-func (wa *WebStream) makeStream(path string) stream.StreamInterface {
+func (wa *StreamBuilder) makeStream(path string) stream.StreamInterface {
 	wa.wsPath = stream.WsPath(path)
 	factory := func() (web_socket.WebSocketInterface, error) {
 		url := string(wa.scheme) + "://" + string(wa.waHost) + string(wa.wsPath)
@@ -29,64 +38,64 @@ func (wa *WebStream) makeStream(path string) stream.StreamInterface {
 	return stream.NewStreamWrapper(factory, wa.wsPath).SetSymbol(wa.symbol)
 }
 
-func (wa *WebStream) Klines(interval string) stream.StreamInterface {
+func (wa *StreamBuilder) Klines(interval string) stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@kline_" + interval)
 }
 
-func (wa *WebStream) ContinuousKlines(interval, contractType string) stream.StreamInterface {
+func (wa *StreamBuilder) ContinuousKlines(interval, contractType string) stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + strings.ToLower(contractType) + "@continuousKline_" + interval)
 }
 
-func (wa *WebStream) PartialBookDepths(level DepthStreamLevel, rates ...DepthStreamRate) stream.StreamInterface {
+func (wa *StreamBuilder) PartialBookDepths(level DepthStreamLevel, rates ...DepthStreamRate) stream.StreamInterface {
 	if len(rates) > 0 {
 		return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)) + "@" + strconv.Itoa(int(rates[0])) + "ms")
 	}
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)))
 }
 
-func (wa *WebStream) DiffBookDepths(rates ...DepthStreamRate) stream.StreamInterface {
+func (wa *StreamBuilder) DiffBookDepths(rates ...DepthStreamRate) stream.StreamInterface {
 	if len(rates) > 0 {
 		return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth@" + strconv.Itoa(int(rates[0])) + "ms")
 	}
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth")
 }
 
-func (wa *WebStream) AggTrades() stream.StreamInterface {
+func (wa *StreamBuilder) AggTrades() stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@aggTrade")
 }
 
-func (wa *WebStream) Trades() stream.StreamInterface {
+func (wa *StreamBuilder) Trades() stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@trade")
 }
 
-func (wa *WebStream) BookTickers() stream.StreamInterface {
+func (wa *StreamBuilder) BookTickers() stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@bookTicker")
 }
 
-func (wa *WebStream) Tickers() stream.StreamInterface {
+func (wa *StreamBuilder) Tickers() stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@ticker")
 }
 
-func (wa *WebStream) MiniTickers() stream.StreamInterface {
+func (wa *StreamBuilder) MiniTickers() stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@miniTicker")
 }
 
-func (wa *WebStream) UserData(listenKey string) stream.StreamInterface {
+func (wa *StreamBuilder) UserData(listenKey string) stream.StreamInterface {
 	return wa.makeStream("/" + listenKey)
 }
 
-func (wa *WebStream) MarkPrice() stream.StreamInterface {
+func (wa *StreamBuilder) MarkPrice() stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@markPrice")
 }
 
-func (wa *WebStream) LiquidationOrder() stream.StreamInterface {
+func (wa *StreamBuilder) LiquidationOrder() stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@forceOrder")
 }
 
-func (wa *WebStream) ContractInfo() stream.StreamInterface {
+func (wa *StreamBuilder) ContractInfo() stream.StreamInterface {
 	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "!contractInfo")
 }
 
-func (wa *WebStream) Stream() stream.StreamInterface {
+func (wa *StreamBuilder) Stream() stream.StreamInterface {
 	return wa.makeStream("")
 }

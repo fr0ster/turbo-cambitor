@@ -3,8 +3,6 @@ package futures_web_stream
 import (
 	common "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
-
-	"github.com/fr0ster/turbo-restler/web_socket"
 )
 
 type WebStream interface {
@@ -39,5 +37,5 @@ func New(useTestNet ...bool) WebStream {
 	} else {
 		wsEndpoint = "fstream.binance.com/ws"
 	}
-	return common.New(web_socket.WsHost(wsEndpoint))
+	return common.NewStreamBuilder(stream.WsHost(wsEndpoint))
 }
