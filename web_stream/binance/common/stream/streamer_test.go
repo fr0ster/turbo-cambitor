@@ -9,6 +9,7 @@ import (
 	"time"
 
 	mock_server "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream/mock_server"
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 
 	streamer "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
@@ -307,33 +308,34 @@ func waitUntilConnected(sw *streamer.StreamWrapper, maxAttempts int, delay time.
 func TestAddRemoveHandlerWithPongControl(t *testing.T) {
 	sw := newStreamWrapper()
 
-	// sw.SetPingHandler(func(appData string) error {
-	// 	t.Logf("📡 Got ping from server: %s", appData)
-	// 	return sw.GetConnection().WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(time.Second))
-	// })
+	sw.SetPingHandler(func(appData string) error {
+		t.Logf("📡 Got ping from server: %s", appData)
+		return sw.GetConnection().WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(time.Second))
+	})
 
-	sw.SetPingHandler()
+	// sw.SetPingHandler()
 
 	called := false
-	sw.AddHandler("ping_control", func(js *simplejson.Json) {
+	sw.AddHandler("listener", func(js *simplejson.Json) {
+		called = true
 		logrus.Infof("Ping control handler called, data: %s", js)
 	})
 
 	rq := simplejson.New()
 	rq.Set("method", "PONG_CONTROL")
 	rq.Set("id", "ping_control")
-	rq.SetPath([]string{"params", "timeout"}, 5000) // це міллісекунди
+	rq.SetPath([]string{"params", "timeout"}, 100) // це міллісекунди
 
 	resp, err := sw.Call(rq)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
 
-	// err = sw.Subscribe("btcusdt@aggTrade")
-	// assert.NoError(t, err)
-	// assert.True(t, called, "Handler should be called")
-	// time.Sleep(1 * time.Second)
+	err = sw.Subscribe("btcusdt@aggTrade")
+	assert.NoError(t, err)
+	assert.True(t, called, "Handler should be called")
+	time.Sleep(1 * time.Second)
 
-	sw.RemoveHandler("ping_control")
+	sw.RemoveHandler("listener")
 	called = sw.GetLoopStarted()
 	assert.False(t, called, "Handler should be removed")
 }

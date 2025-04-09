@@ -2,6 +2,7 @@ package futures_web_api_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	web_api "github.com/fr0ster/turbo-cambitor/web_api/binance/futures"
@@ -25,16 +26,28 @@ func TestAccountBalance(t *testing.T) {
 
 // Test 3: Account Information
 func TestAccountInformation(t *testing.T) {
+	if apiKey == "" || secret == "" {
+		t.Skip("Skipping test because API key or secret is not set")
+	}
 	wa := web_api.New(sign, true)
 	response, err := wa.Call(wa.AccountInformation().SetAPIKey().SetTimestamp().SetSignature().Do())
+	if err != nil && strings.Contains(err.Error(), "timeout") {
+		t.Skip("Skipping test because of timeout")
+	}
 	assert.Nil(t, err)
 	assert.NotNil(t, response)
 }
 
 // Test 5: Account Positions
 func TestAccountPositions(t *testing.T) {
+	if apiKey == "" || secret == "" {
+		t.Skip("Skipping test because API key or secret is not set")
+	}
 	wa := web_api.New(sign, true)
 	response, err := wa.Call(wa.AccountPositions().SetAPIKey().SetTimestamp().SetSignature().Do())
+	if err != nil && strings.Contains(err.Error(), "timeout") {
+		t.Skip("Skipping test because of timeout")
+	}
 	assert.Nil(t, err)
 	assert.NotNil(t, response)
 }
