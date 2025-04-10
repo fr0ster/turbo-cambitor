@@ -51,10 +51,7 @@ func NewStreamWrapper(
 	}
 }
 
-func (sw *StreamWrapper) Connect(start ...bool) error {
-	if len(start) == 0 {
-		start = append(start, true)
-	}
+func (sw *StreamWrapper) Connect() error {
 	sw.mu.Lock()
 	defer sw.mu.Unlock()
 
@@ -63,9 +60,7 @@ func (sw *StreamWrapper) Connect(start ...bool) error {
 		return fmt.Errorf("connect failed: %w", err)
 	}
 
-	if start[0] {
-		socket.Open()
-	}
+	socket.Open()
 	sw.socket = socket
 	return nil
 }
@@ -87,6 +82,15 @@ func (sw *StreamWrapper) Reconnect(maxAttempts int, delay time.Duration) error {
 		time.Sleep(delay)
 	}
 	return fmt.Errorf("failed to reconnect after %d attempts", maxAttempts)
+}
+
+func (sw *StreamWrapper) Disconnect() {
+	sw.mu.Lock()
+	defer sw.mu.Unlock()
+	if sw.socket != nil {
+		sw.socket.Close()
+		sw.socket = nil
+	}
 }
 
 func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
@@ -241,4 +245,11 @@ func (sw *StreamWrapper) DisableAutoReconnect() {
 		close(sw.reconnectStopChan)
 		sw.reconnectStopChan = nil
 	}
+}
+
+func (sw *StreamWrapper) SetMessageLogger(logger func(message web_socket.LogRecord)) StreamInterface {
+	if sw.socket != nil {
+		sw.socket.SetMessageLogger(logger)
+	}
+	return sw
 }

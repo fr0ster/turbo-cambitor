@@ -3,45 +3,47 @@ package streamer
 import (
 	"time"
 
-	"github.com/bitly/go-simplejson"
 	"github.com/fr0ster/turbo-restler/web_socket"
 )
 
-// StreamInterface описує лише бізнес-рівень логіки роботи зі стрімами
+// StreamInterface describes only the business-level logic for working with streams
 type StreamInterface interface {
-	// Connect встановлює WebSocket-зʼєднання і запускає стрім
-	Connect(...bool) error
+	// Connect establishes a WebSocket connection and starts the stream
+	Connect() error
 
-	// Reconnect перестворює зʼєднання з повторними спробами
+	// Reconnect recreates the connection with retry attempts
 	Reconnect(maxAttempts int, delay time.Duration) error
 
-	// Call виконує запит і чекає відповідь у стилі RPC
-	Call(rq *simplejson.Json) (*simplejson.Json, error)
+	// Disconnect closes the WebSocket connection
+	Disconnect()
 
-	// Subscribe надсилає бізнес-рівневу підписку (наприклад, на Binance)
+	// Subscribe sends a business-level subscription (e.g., to Binance)
 	Subscribe(subscriptions ...string) error
 
-	// Unsubscribe знімає підписку на бізнес-потік
+	// Unsubscribe removes a subscription from the business stream
 	Unsubscribe(subscriptions ...string) error
 
-	// ListOfSubscriptions повертає поточні бізнес-підписки
+	// ListOfSubscriptions returns the current business-level subscriptions
 	ListOfSubscriptions() ([]string, error)
 
-	// SetSymbol задає символ (наприклад, BTCUSDT)
+	// SetSymbol sets the symbol (e.g., BTCUSDT)
 	SetSymbol(symbol string) StreamInterface
 
-	// GetConnection повертає underlying WebSocketInterface, якщо потрібно передати далі
+	// GetConnection returns the underlying WebSocketInterface, if it needs to be passed further
 	GetConnection() web_socket.WebSocketInterface
 
-	// SetMaxReconnectAttempts встановлює максимальну кількість спроб реконекту
+	// SetMaxReconnectAttempts sets the maximum number of reconnect attempts
 	SetMaxReconnectAttempts(n int) StreamInterface
 
-	// SetReconnectInterval задає інтервал між спробами реконекту
+	// SetReconnectInterval sets the interval between reconnect attempts
 	SetReconnectInterval(interval time.Duration) StreamInterface
 
-	// EnableAutoReconnect вмикає автоматичний реконект
+	// EnableAutoReconnect enables automatic reconnection
 	EnableAutoReconnect() StreamInterface
 
-	// DisableAutoReconnect вимикає автоматичний реконект
+	// DisableAutoReconnect disables automatic reconnection
 	DisableAutoReconnect()
+
+	// SetMessageLogger sets a function for logging messages
+	SetMessageLogger(logger func(message web_socket.LogRecord)) StreamInterface
 }

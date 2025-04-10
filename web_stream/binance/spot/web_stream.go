@@ -1,43 +1,44 @@
 package spot_web_stream
 
 import (
-	common "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
+	common "github.com/fr0ster/turbo-cambitor/common"
+	builder "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
-
-	"github.com/fr0ster/turbo-restler/web_socket"
 )
 
 type WebStream interface {
-	Klines(interval string) *stream.StreamWrapper
-	ContinuousKlines(interval string, contractType string) *stream.StreamWrapper
-	PartialBookDepths(level common.DepthStreamLevel, rates ...common.DepthStreamRate) *stream.StreamWrapper
-	DiffBookDepths(rates ...common.DepthStreamRate) *stream.StreamWrapper
-	AggTrades() *stream.StreamWrapper
-	Trades() *stream.StreamWrapper
-	BookTickers() *stream.StreamWrapper
-	Tickers() *stream.StreamWrapper
-	MiniTickers() *stream.StreamWrapper
-	UserData(listenKey string) *stream.StreamWrapper
-	MarkPrice() *stream.StreamWrapper
-	LiquidationOrder() *stream.StreamWrapper
-	ContractInfo() *stream.StreamWrapper
-	Stream() *stream.StreamWrapper
-
-	Lock()
-	Unlock()
+	Klines(interval string) stream.StreamInterface
+	ContinuousKlines(interval string, contractType string) stream.StreamInterface
+	PartialBookDepths(level builder.DepthStreamLevel, rates ...builder.DepthStreamRate) stream.StreamInterface
+	DiffBookDepths(rates ...builder.DepthStreamRate) stream.StreamInterface
+	AggTrades() stream.StreamInterface
+	Trades() stream.StreamInterface
+	BookTickers() stream.StreamInterface
+	Tickers() stream.StreamInterface
+	MiniTickers() stream.StreamInterface
+	UserData(listenKey string) stream.StreamInterface
+	MarkPrice() stream.StreamInterface
+	LiquidationOrder() stream.StreamInterface
+	ContractInfo() stream.StreamInterface
+	Stream() stream.StreamInterface
 }
 
-func New(useTestNet ...bool) WebStream {
+func NewDefault(useTestNet ...bool) WebStream {
 	var (
-		wsEndpoint string
+		wsScheme   common.WsScheme
+		wsHost     common.WsHost
+		wsEndpoint common.WsEndpoint
 	)
 	if len(useTestNet) == 0 {
 		useTestNet = append(useTestNet, false)
 	}
 	if useTestNet[0] {
-		wsEndpoint = "testnet.binance.vision/ws"
+		wsHost = "testnet.binance.vision"
+		wsEndpoint = "/ws"
 	} else {
-		wsEndpoint = "stream.binance.com:9443/ws"
+		wsHost = "stream.binance.com:9443"
+		wsEndpoint = "/ws"
 	}
-	return common.New(web_socket.WsHost(wsEndpoint))
+	wsScheme = common.WsSchemeWSS
+	return builder.NewStreamBuilder(wsScheme, wsHost, wsEndpoint)
 }

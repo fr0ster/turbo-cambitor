@@ -290,3 +290,40 @@ func TestPingPongHandlingWithActiveStream(t *testing.T) {
 	assert.True(t, pingCalled, "Ping handler should have been called")
 	assert.True(t, messageReceived, "WebSocket message should have been received")
 }
+
+func TestStreamWrapperLoggerCalled(t *testing.T) {
+	var logCalled bool
+	var logErr error
+
+	logChan := make(chan web_socket.LogRecord, 1)
+
+	sw := newStreamWrapper()
+	sw.SetMessageLogger(func(r web_socket.LogRecord) {
+		logCalled = true
+		logErr = r.Err
+		select {
+		case logChan <- r:
+		default:
+			// Don't block if the channel is full
+		}
+	})
+
+	// Відправляємо щось, щоб викликати логування на receive
+	err := sw.Subscribe("btcusdt@aggTrade")
+	assert.NoError(t, err)
+
+	select {
+	case rec := <-logChan:
+		t.Logf("📘 Received log: op=%s body=%s err=%v", rec.Op, string(rec.Body), rec.Err)
+		assert.Equal(t, web_socket.OpSend, rec.Op, "should log a send operation")
+		assert.NotNil(t, string(rec.Body), "subscribe", "should include subscribe payload")
+		assert.Nil(t, rec.Err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected log record not received")
+	}
+
+	assert.True(t, logCalled, "logger should have been called")
+	assert.Nil(t, logErr)
+
+	sw.Disconnect()
+}

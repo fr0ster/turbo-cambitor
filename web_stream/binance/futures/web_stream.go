@@ -21,20 +21,13 @@ type WebStream interface {
 	LiquidationOrder() stream.StreamInterface
 	ContractInfo() stream.StreamInterface
 	Stream() stream.StreamInterface
-
-	// Lock()
-	// Unlock()
 }
 
-func New(useTestNet ...bool) WebStream {
+func NewDefault(useTestNet ...bool) WebStream {
 	var (
-		waScheme = common.WsSchemeWSS
-		// waHost   common.WsHost
-		// waPath   common.WsPath
-		// wsEndpoint = common.WsEndpoint
-		waHost     common.WsHost
-		waPath     common.WsPath
-		wsEndpoint string
+		wsScheme   common.WsScheme
+		wsHost     common.WsHost
+		wsEndpoint common.WsEndpoint
 	)
 	if len(useTestNet) == 0 {
 		useTestNet = append(useTestNet, false)
@@ -42,9 +35,13 @@ func New(useTestNet ...bool) WebStream {
 	if useTestNet[0] {
 		wsEndpoint = "fstream.binancefuture.com/ws"
 	} else {
-		waHost = "fstream.binance.com"
-		waPath = "/ws"
-		// wsEndpoint = "fstream.binance.com/ws"
+		wsHost = "fstream.binance.com"
+		wsEndpoint = "/ws"
 	}
-	return builder.NewStreamBuilder(waScheme, waHost)
+	wsScheme = common.WsSchemeWSS
+	return builder.NewStreamBuilder(wsScheme, wsHost, wsEndpoint)
+}
+
+func New(host string, endpoint string, scheme string) WebStream {
+	return builder.NewStreamBuilder(common.WsScheme(scheme), common.WsHost(host), common.WsEndpoint(endpoint))
 }
