@@ -166,7 +166,7 @@ func startPingController(conn *websocket.Conn, timeoutMs int, stopChan chan stru
 		case <-ticker.C:
 			// надсилаємо ping
 			mockServerMu.Lock()
-			err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(time.Second))
+			err := conn.WriteControl(websocket.PingMessage, []byte(fmt.Sprintf("ping-%d", time.Now().UnixNano())), time.Now().Add(time.Second))
 			mockServerMu.Unlock()
 
 			if err != nil {

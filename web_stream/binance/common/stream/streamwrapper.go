@@ -71,8 +71,11 @@ func (sw *StreamWrapper) Reconnect(maxAttempts int, delay time.Duration) error {
 }
 
 func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
-	id := uuid.New().String()
-	rq.Set("id", id)
+	id := rq.Get("id").MustString()
+	if rq.Get("id").MustString() == "" {
+		id = uuid.New().String()
+		rq.Set("id", id)
+	}
 
 	resultC := make(chan *simplejson.Json, 1)
 	errC := make(chan error, 1)
