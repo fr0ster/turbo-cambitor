@@ -4,38 +4,51 @@ import (
 	"strconv"
 	"strings"
 
+	common "github.com/fr0ster/turbo-cambitor/common"
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
-	"github.com/fr0ster/turbo-restler/web_socket"
+	web_socket "github.com/fr0ster/turbo-restler/web_socket"
+
 	"github.com/gorilla/websocket"
 )
 
 // NewWebStream створює новий екземпляр StreamBuilder з переданими параметрами.
-func NewStreamBuilder(scheme stream.WsScheme, host stream.WsHost, symbol string) *StreamBuilder {
+func NewStreamBuilder(scheme common.WsScheme, host common.WsHost, endpoint common.WsEndpoint, symbol ...string) *StreamBuilder {
+	if len(symbol) == 0 {
+		symbol = append(symbol, "")
+	}
 	return &StreamBuilder{
-		scheme: scheme,
-		waHost: host,
-		symbol: symbol,
+		wsScheme:   scheme,
+		wsHost:     host,
+		wsEndpoint: endpoint,
+		symbol:     symbol[0],
 	}
 }
 
 type StreamBuilder struct {
-	scheme stream.WsScheme
-	waHost stream.WsHost
-	symbol string
-	wsPath stream.WsPath
+	wsScheme   common.WsScheme
+	wsHost     common.WsHost
+	wsEndpoint common.WsEndpoint
+	symbol     string
 }
 
-func (wa *StreamBuilder) makeStream(path string) stream.StreamInterface {
-	wa.wsPath = stream.WsPath(path)
+func (wa *StreamBuilder) makeStream(endpoint string) stream.StreamInterface {
+	fullEndpoint := string(wa.wsEndpoint) + endpoint
+
 	factory := func() (web_socket.WebSocketInterface, error) {
-		url := string(wa.scheme) + "://" + string(wa.waHost) + string(wa.wsPath)
+		url := string(wa.wsScheme) + "://" + string(wa.wsHost) + fullEndpoint
 		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 		if err != nil {
 			return nil, err
 		}
 		return web_socket.NewWebSocketWrapper(conn), nil
 	}
-	return stream.NewStreamWrapper(factory, wa.wsPath).SetSymbol(wa.symbol)
+
+	return stream.NewStreamWrapper(
+		factory,
+		wa.wsScheme,
+		wa.wsHost,
+		common.WsEndpoint(fullEndpoint),
+	).SetSymbol(wa.symbol)
 }
 
 func (wa *StreamBuilder) Klines(interval string) stream.StreamInterface {

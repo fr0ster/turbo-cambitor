@@ -6,23 +6,20 @@ import (
 	"strings"
 	"testing"
 
+	common "github.com/fr0ster/turbo-cambitor/common"
 	common_web_stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
-	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 	"github.com/gorilla/websocket"
 )
-
-// ...
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true }, // ⚠️ дозволяє все
+	CheckOrigin:     func(r *http.Request) bool { return true }, // дозволяє будь-яке джерело
 }
 
 func mockWSHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		// не можна використовувати t.Logf тут, бо t не передається — просто лог
 		println("Upgrade error:", err.Error())
 		return
 	}
@@ -40,13 +37,22 @@ func mockWSHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestStreamBuilder_AggTrades(t *testing.T) {
+	// Запускаємо мок-сервер
 	server := httptest.NewServer(http.HandlerFunc(mockWSHandler))
 	defer server.Close()
 
-	// Отримаємо хост без http://
-	wsHost := strings.TrimPrefix(server.URL, "http://")
+	// Отримаємо хост без "http://"
+	hostOnly := strings.TrimPrefix(server.URL, "http://") // localhost:12345
+	symbol := "btcusdt"
 
-	builder := common_web_stream.NewStreamBuilder("ws", stream.WsHost(wsHost), "btcusdt")
+	// Конструктор StreamBuilder (тут wsEndpoint буде "")
+	builder := common_web_stream.NewStreamBuilder(
+		common.WsScheme("ws"),
+		common.WsHost(hostOnly),
+		common.WsEndpoint("/ws"), // базовий префікс, додається до кожного endpoint
+		symbol,
+	)
+
 	stream := builder.AggTrades()
 
 	err := stream.Connect()

@@ -8,14 +8,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fr0ster/turbo-cambitor/common"
 	mock_server "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream/mock_server"
 	"github.com/fr0ster/turbo-restler/web_socket"
-	"github.com/gorilla/websocket"
-	"github.com/sirupsen/logrus"
 
 	streamer "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 
 	"github.com/bitly/go-simplejson"
+	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,8 +29,11 @@ func TestMain(m *testing.M) {
 }
 
 func newStreamWrapper() *streamer.StreamWrapper {
+	scheme := "ws"
+	host := "localhost:8080"
+	endpoint := "/ws"
 	factory := func() (web_socket.WebSocketInterface, error) {
-		url := "ws://localhost:8080/ws"
+		url := fmt.Sprintf("%s://%s%s", scheme, host, endpoint)
 		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 		if err != nil {
 			return nil, err
@@ -37,7 +41,7 @@ func newStreamWrapper() *streamer.StreamWrapper {
 		return web_socket.NewWebSocketWrapper(conn), nil
 	}
 
-	sw := streamer.NewStreamWrapper(factory, "/ws").SetSymbol("btcusdt")
+	sw := streamer.NewStreamWrapper(factory, common.WsScheme(scheme), common.WsHost(host), common.WsEndpoint(endpoint)).SetSymbol("btcusdt")
 
 	if err := sw.Connect(); err != nil {
 		panic(err)

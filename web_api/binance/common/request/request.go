@@ -5,7 +5,7 @@ import (
 
 	"github.com/bitly/go-simplejson"
 
-	"github.com/fr0ster/turbo-restler/web_socket"
+	common "github.com/fr0ster/turbo-cambitor/common"
 	signature "github.com/fr0ster/turbo-signer/signature"
 	"github.com/google/uuid"
 )
@@ -13,11 +13,11 @@ import (
 type (
 	Method         string
 	RequestBuilder struct {
-		sign   signature.Sign
-		waHost web_socket.WsHost
-		waPath web_socket.WsPath
-		method Method
-		params *simplejson.Json
+		sign       signature.Sign
+		waHost     common.WsHost
+		waEndpoint common.WsEndpoint
+		method     Method
+		params     *simplejson.Json
 	}
 )
 
@@ -63,12 +63,12 @@ func (rq *RequestBuilder) Do() (result *simplejson.Json) {
 	return
 }
 
-func New(method Method, waHost web_socket.WsHost, waPath web_socket.WsPath, sign signature.Sign) *RequestBuilder {
+func New(method Method, waHost common.WsHost, waEndpoint common.WsEndpoint, sign signature.Sign) *RequestBuilder {
 	return &RequestBuilder{
-		sign:   sign,
-		waHost: waHost,
-		waPath: waPath,
-		params: nil,
-		method: method,
+		sign:       sign,
+		waHost:     waHost,
+		waEndpoint: waEndpoint,
+		params:     nil,
+		method:     method,
 	}
 }

@@ -2,9 +2,9 @@ package common_web_api
 
 import (
 	"sync"
-	"time"
 
-	"github.com/fr0ster/turbo-restler/web_socket"
+	common "github.com/fr0ster/turbo-cambitor/common"
+	web_socket "github.com/fr0ster/turbo-restler/web_socket"
 	signature "github.com/fr0ster/turbo-signer/signature"
 )
 
@@ -21,13 +21,11 @@ const (
 type (
 	DepthAPILimit int
 	WebApiWrapper struct {
-		waHost        web_socket.WsHost
-		waPath        web_socket.WsPath
-		mutex         *sync.Mutex
-		sign          signature.Sign
-		connection    *web_socket.WebSocketWrapper
-		isLoopStarted bool
-		wsHandlerMap  web_socket.WsHandlerMap
-		timeOut       time.Duration
+		waHost     common.WsHost
+		waEndpoint common.WsEndpoint
+		waScheme   common.WsScheme
+		mutex      *sync.Mutex
+		sign       signature.Sign
+		connection web_socket.WebSocketInterface
 	}
 )

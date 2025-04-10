@@ -17,7 +17,7 @@ var (
 
 // Test 3: Account Information
 func TestAccountInformation(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.AccountInformation().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -25,7 +25,7 @@ func TestAccountInformation(t *testing.T) {
 
 // Test 7: Exchange Info
 func TestExchangeInfo(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.ExchangeInfo().Set("symbols", []string{"BTCUSDT"}).Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -40,7 +40,7 @@ func TestExchangeInfo(t *testing.T) {
 
 // Test 10: Logout
 func TestLogout(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.Logout().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -48,7 +48,7 @@ func TestLogout(t *testing.T) {
 
 // Test 11: Order Book
 func TestOrderBook(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.OrderBook().Set("symbol", "BTCUSDT").Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -56,7 +56,7 @@ func TestOrderBook(t *testing.T) {
 
 // Test 12: Ping
 func TestPing(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.Ping().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -64,7 +64,7 @@ func TestPing(t *testing.T) {
 
 // Test 13: Place, Query And Cancel Order
 func TestPlaceAndQueryAndCancelOrder(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.PlaceOrder().
 		SetAPIKey().
 		Set("symbol", "BTCUSDT").
@@ -100,7 +100,7 @@ func TestPlaceAndQueryAndCancelOrder(t *testing.T) {
 
 // Test 6: Place, Query And CancelReplace Order
 func TestPlaceAndQueryAndCancelReplaceOrder(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.PlaceOrder().
 		SetAPIKey().
 		Set("symbol", "BTCUSDT").
@@ -142,7 +142,7 @@ func TestPlaceAndQueryAndCancelReplaceOrder(t *testing.T) {
 
 // Test 15: Query Open Orders
 func TestQueryOpenOrders(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.QueryOpenOrders().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -150,7 +150,7 @@ func TestQueryOpenOrders(t *testing.T) {
 
 // Test 19: Status
 func TestStatus(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.Status().Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -158,7 +158,7 @@ func TestStatus(t *testing.T) {
 
 // Test 20: Symbol Book Ticker
 func TestSymbolBookTicker(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.SymbolBookTicker().Set("symbols", []string{"BTCUSDT"}).Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -166,7 +166,7 @@ func TestSymbolBookTicker(t *testing.T) {
 
 // Test 21: Symbol Price Ticker
 func TestSymbolPriceTicker(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.SymbolPriceTicker().Set("symbols", []string{"BTCUSDT"}).Do())
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
@@ -174,7 +174,7 @@ func TestSymbolPriceTicker(t *testing.T) {
 
 // Test 22: Time
 func TestTime(t *testing.T) {
-	wa := web_api.New(sign, true)
+	wa := web_api.NewDefault(sign, true)
 	assert.NotNil(t, wa.Time())
 	result, err := wa.Call(wa.Time().Do())
 	assert.Nil(t, err)

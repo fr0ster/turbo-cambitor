@@ -10,7 +10,7 @@ import (
 // StreamInterface описує лише бізнес-рівень логіки роботи зі стрімами
 type StreamInterface interface {
 	// Connect встановлює WebSocket-зʼєднання і запускає стрім
-	Connect() error
+	Connect(...bool) error
 
 	// Reconnect перестворює зʼєднання з повторними спробами
 	Reconnect(maxAttempts int, delay time.Duration) error

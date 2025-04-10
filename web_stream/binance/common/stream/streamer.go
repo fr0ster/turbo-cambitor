@@ -7,17 +7,21 @@ import (
 	"time"
 
 	"github.com/bitly/go-simplejson"
-	"github.com/fr0ster/turbo-restler/web_socket"
 	"github.com/google/uuid"
+
+	"github.com/fr0ster/turbo-cambitor/common"
+	"github.com/fr0ster/turbo-restler/web_socket"
 )
 
 type StreamWrapper struct {
-	socket  web_socket.WebSocketInterface
-	factory func() (web_socket.WebSocketInterface, error)
-	symbol  string
-	wsPath  WsPath
-	timeOut time.Duration
-	mu      sync.Mutex
+	socket     web_socket.WebSocketInterface
+	factory    func() (web_socket.WebSocketInterface, error)
+	symbol     string
+	wsScheme   common.WsScheme
+	wsHost     common.WsHost
+	wsEndpoint common.WsEndpoint
+	timeOut    time.Duration
+	mu         sync.Mutex
 
 	autoReconnect        bool
 	reconnectStopChan    chan struct{}
@@ -29,15 +33,28 @@ type StreamWrapper struct {
 }
 
 // NewStreamWrapper створює новий StreamWrapper з фабрикою сокета
-func NewStreamWrapper(factory func() (web_socket.WebSocketInterface, error), wsPath WsPath) *StreamWrapper {
+func NewStreamWrapper(
+	factory func() (web_socket.WebSocketInterface, error),
+	wsScheme common.WsScheme,
+	wsHost common.WsHost,
+	wsEndpoint common.WsEndpoint,
+	timeOut ...time.Duration) *StreamWrapper {
+	if len(timeOut) == 0 {
+		timeOut = append(timeOut, 10*time.Second)
+	}
 	return &StreamWrapper{
-		factory: factory,
-		wsPath:  wsPath,
-		timeOut: 10 * time.Second,
+		factory:    factory,
+		wsScheme:   wsScheme,
+		wsHost:     wsHost,
+		wsEndpoint: wsEndpoint,
+		timeOut:    timeOut[0],
 	}
 }
 
-func (sw *StreamWrapper) Connect() error {
+func (sw *StreamWrapper) Connect(start ...bool) error {
+	if len(start) == 0 {
+		start = append(start, true)
+	}
 	sw.mu.Lock()
 	defer sw.mu.Unlock()
 
@@ -46,7 +63,9 @@ func (sw *StreamWrapper) Connect() error {
 		return fmt.Errorf("connect failed: %w", err)
 	}
 
-	socket.Open()
+	if start[0] {
+		socket.Open()
+	}
 	sw.socket = socket
 	return nil
 }
@@ -154,7 +173,7 @@ func (sw *StreamWrapper) ListOfSubscriptions() ([]string, error) {
 func (sw *StreamWrapper) SetSymbol(symbol string) StreamInterface {
 	sw.symbol = symbol
 	if symbol != "" {
-		sw.wsPath = WsPath("/" + strings.ToLower(symbol) + sw.wsPath.Suffix())
+		sw.wsEndpoint = common.WsEndpoint(fmt.Sprintf("/%s/%s", sw.wsEndpoint, strings.ToLower(symbol)))
 	}
 	return sw
 }
