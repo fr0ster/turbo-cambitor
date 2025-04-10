@@ -1,7 +1,6 @@
 package futures_web_stream_test
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"testing"
@@ -41,81 +40,109 @@ func StartMockWSServer(addr string) *http.Server {
 		}
 		defer conn.Close()
 
-		path := r.URL.Path[len("/ws"):] // e.g. /btcusdt@kline_1m
-		response := ResponseByPath[path]
-
-		// Відправляємо мок-повідомлення через 100ms
+		path := r.URL.Path[len("/ws"):]
+		response := ResponseByPath["/ws"+path]
 		time.Sleep(100 * time.Millisecond)
-		err = conn.WriteMessage(websocket.TextMessage, []byte(response))
-		if err != nil {
-			log.Printf("Write error: %v", err)
-		}
+		_ = conn.WriteMessage(websocket.TextMessage, []byte(response))
 	})
 
-	return &http.Server{Addr: addr, Handler: mux}
+	server := &http.Server{Addr: addr, Handler: mux}
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Mock WS server error: %v", err)
+		}
+	}()
+	return server
 }
 
-type testCase struct {
-	name      string
-	getStream func(web_stream.WebStream) streamer.StreamInterface
-	expect    string
+func checkStreamMessage(t *testing.T, stream streamer.StreamInterface, expect string) {
+	msgChan := make(chan string, 1)
+	stream.SetMessageLogger(func(msg web_socket.LogRecord) {
+		select {
+		case msgChan <- string(msg.Body):
+		default:
+		}
+	})
+	err := stream.Connect()
+	require.NoError(t, err, "stream.Connect() failed")
+	defer stream.Disconnect()
+
+	select {
+	case body := <-msgChan:
+		require.Contains(t, body, expect)
+	case <-time.After(1 * time.Second):
+		t.Fatalf("Timeout: no message received")
+	}
+	// Close the channel to avoid memory leaks
+	close(msgChan)
+	// Disconnect the stream to clean up resources
+	stream.Disconnect()
+	require.NoError(t, err, "stream.Disconnect() failed")
 }
 
-func TestAllStreamsWithMockResponses(t *testing.T) {
-	server := StartMockWSServer(":9090")
-	go server.ListenAndServe()
-	defer server.Shutdown(context.Background())
-
-	time.Sleep(200 * time.Millisecond) // Дати серверу стартанути
-
+// func TestKlines is replaced by TestKlines_Debug for single-purpose testability
+func TestKlines_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
 	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.Klines("1m").SetSymbol("btcusdt"), "mock_kline")
+}
 
-	tests := []testCase{
-		{"Klines", func(ws web_stream.WebStream) streamer.StreamInterface { return ws.Klines("1m") }, `mock_kline`},
-		{"AggTrades", func(ws web_stream.WebStream) streamer.StreamInterface { return ws.AggTrades() }, `mock_agg`},
-		{"Trades", func(ws web_stream.WebStream) streamer.StreamInterface { return ws.Trades() }, `mock_trade`},
-		{"MiniTickers", func(ws web_stream.WebStream) streamer.StreamInterface { return ws.MiniTickers() }, `mock_mini`},
-		{"Tickers", func(ws web_stream.WebStream) streamer.StreamInterface { return ws.Tickers() }, `mock_ticker`},
-		{"BookTickers", func(ws web_stream.WebStream) streamer.StreamInterface { return ws.BookTickers() }, `mock_book`},
-		{"PartialBookDepths", func(ws web_stream.WebStream) streamer.StreamInterface {
-			return ws.PartialBookDepths(5, 100)
-		}, `mock_depth5`},
-		{"DiffBookDepths", func(ws web_stream.WebStream) streamer.StreamInterface {
-			return ws.DiffBookDepths(100)
-		}, `mock_depth`},
-		{"MarkPrice", func(ws web_stream.WebStream) streamer.StreamInterface { return ws.MarkPrice() }, `mock_mark`},
-		{"LiquidationOrder", func(ws web_stream.WebStream) streamer.StreamInterface { return ws.LiquidationOrder() }, `mock_liq`},
-		{"ContinuousKlines", func(ws web_stream.WebStream) streamer.StreamInterface {
-			return ws.ContinuousKlines("1m", "perpetual")
-		}, `mock_cont_kline`},
-	}
+func TestAggTrades_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.AggTrades().SetSymbol("btcusdt"), "mock_agg")
+}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			msgChan := make(chan string, 1)
+func TestTrades_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.Trades().SetSymbol("btcusdt"), "mock_trade")
+}
 
-			stream := tc.getStream(ws).
-				SetSymbol("btcusdt").
-				SetMessageLogger(func(msg web_socket.LogRecord) {
-					select {
-					case msgChan <- string(msg.Body):
-					default:
-						// Don't block if the channel is full
-					}
-				})
+func TestMiniTickers_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.MiniTickers().SetSymbol("btcusdt"), "mock_mini")
+}
 
-			require.NotNil(t, stream)
+func TestTickers_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.Tickers().SetSymbol("btcusdt"), "mock_ticker")
+}
 
-			err := stream.Connect()
-			require.NoError(t, err)
-			defer stream.Disconnect()
+func TestBookTickers_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.BookTickers().SetSymbol("btcusdt"), "mock_book")
+}
 
-			select {
-			case body := <-msgChan:
-				require.Contains(t, body, tc.expect)
-			case <-time.After(1 * time.Second):
-				t.Fatalf("Timeout: no message received for %s", tc.name)
-			}
-		})
-	}
+func TestPartialBookDepths_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.PartialBookDepths(5, 100).SetSymbol("btcusdt"), "mock_depth5")
+}
+
+func TestDiffBookDepths_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.DiffBookDepths(100).SetSymbol("btcusdt"), "mock_depth")
+}
+
+func TestMarkPrice_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.MarkPrice(), "mock_mark")
+}
+
+func TestLiquidationOrder_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.LiquidationOrder(), "mock_liq")
+}
+
+func TestContinuousKlines_Debug(t *testing.T) {
+	StartMockWSServer(":9090")
+	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	checkStreamMessage(t, ws.ContinuousKlines("1m", "perpetual").SetSymbol("btcusdt"), "mock_cont_kline")
 }
