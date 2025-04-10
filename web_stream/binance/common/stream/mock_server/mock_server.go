@@ -60,6 +60,9 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request, port int)
 	pingPongStopChan := make(chan struct{})
 	pingPongActive := false
 
+	// ⬇️ Підписки клієнта
+	subscriptions := make(map[string]chan struct{})
+
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
@@ -82,21 +85,105 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request, port int)
 
 		switch method {
 		case "SUBSCRIBE":
-			resp.Set("result", "")
+			streamsRaw := req.Get("params").MustArray()
+			var subscribed []string
+			var already []string
+
+			for _, s := range streamsRaw {
+				stream, ok := s.(string)
+				if !ok || stream == "" {
+					continue
+				}
+				if _, exists := subscriptions[stream]; exists {
+					already = append(already, stream)
+					continue
+				}
+
+				stop := make(chan struct{})
+				subscriptions[stream] = stop
+
+				go func(c *websocket.Conn, stream string, stop chan struct{}) {
+					ticker := time.NewTicker(500 * time.Millisecond)
+					defer ticker.Stop()
+
+					for {
+						select {
+						case <-stop:
+							logrus.Infof("🛑 Stream %s stopped", stream)
+							return
+						case t := <-ticker.C:
+							msg := simplejson.New()
+							msg.Set("type", "mock_data")
+							msg.Set("stream", stream)
+							msg.Set("time", t.Format(time.RFC3339))
+							msg.Set("value", fmt.Sprintf("%.2f", 30000+1000*float64(time.Now().UnixNano()%1000)/1000.0))
+
+							b, _ := msg.Encode()
+							mockServerMu.Lock()
+							err := c.WriteMessage(websocket.TextMessage, b)
+							mockServerMu.Unlock()
+							if err != nil {
+								logrus.Warnf("❌ Failed to send mock data for %s: %v", stream, err)
+								return
+							}
+						}
+					}
+				}(conn, stream, stop)
+
+				subscribed = append(subscribed, stream)
+			}
+
+			if len(subscribed) > 0 {
+				resp.Set("result", subscribed)
+			} else {
+				resp.Set("error", fmt.Sprintf("Already subscribed to: %v", already))
+			}
+
 		case "UNSUBSCRIBE":
-			resp.Set("result", true)
+			streamsRaw := req.Get("params").MustArray()
+			var unsubscribed []string
+			var notFound []string
+
+			for _, s := range streamsRaw {
+				stream, ok := s.(string)
+				if !ok || stream == "" {
+					continue
+				}
+				if stop, exists := subscriptions[stream]; exists {
+					close(stop)
+					delete(subscriptions, stream)
+					unsubscribed = append(unsubscribed, stream)
+				} else {
+					notFound = append(notFound, stream)
+				}
+			}
+
+			if len(unsubscribed) > 0 {
+				resp.Set("result", unsubscribed)
+			} else {
+				resp.Set("error", fmt.Sprintf("Not subscribed to: %v", notFound))
+			}
+
 		case "LIST_SUBSCRIPTIONS":
-			resp.Set("result", []string{"btcusdt@aggTrade"})
+			activeStreams := make([]string, 0, len(subscriptions))
+			for k := range subscriptions {
+				activeStreams = append(activeStreams, k)
+			}
+			resp.Set("result", activeStreams)
+
 		case "UNKNOWN_METHOD":
 			logrus.Info("🤐 Simulating timeout: no response sent")
 			time.Sleep(2 * time.Second)
 			continue
+
 		case "CLOSE_GRACEFUL":
 			handleClose(conn, stopChan, restartAfter, port, "graceful shutdown", websocket.CloseNormalClosure)
 			return
+
 		case "CLOSE_ABRUPT":
 			handleClose(conn, stopChan, restartAfter, port, "abrupt shutdown", websocket.CloseAbnormalClosure)
 			return
+
 		case "ERROR":
 			params := req.Get("params").MustArray()
 			errorText := "generic error"
@@ -111,13 +198,13 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request, port int)
 			conn.WriteMessage(websocket.TextMessage, b)
 			mockServerMu.Unlock()
 			continue
+
 		case "PONG_CONTROL":
 			timeout := req.Get("params").Get("timeout").MustInt(1000)
 			if !pingPongActive {
 				pingPongActive = true
 				go startPingController(conn, timeout, pingPongStopChan)
 
-				// ⬇️ ПЕРШЕ ПОВІДОМЛЕННЯ, щоб Read() щось прийняло
 				msg := simplejson.New()
 				msg.Set("type", "ping")
 				msg.Set("time", time.Now().Format(time.RFC3339))
@@ -128,6 +215,7 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request, port int)
 			} else {
 				resp.Set("result", "pong control already active")
 			}
+
 		default:
 			resp.Set("error", "unknown method")
 		}
@@ -138,6 +226,10 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request, port int)
 		mockServerMu.Unlock()
 	}
 
+	// 🧹 Зупиняємо всі активні підписки
+	for _, stop := range subscriptions {
+		close(stop)
+	}
 	close(stopChan)
 	close(pingPongStopChan)
 }

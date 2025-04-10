@@ -30,6 +30,8 @@ type StreamWrapper struct {
 
 	// для контролю паралельного доступу
 	reconnectMu sync.Mutex
+
+	handlers map[string]int
 }
 
 // NewStreamWrapper створює новий StreamWrapper з фабрикою сокета
@@ -48,6 +50,7 @@ func NewStreamWrapper(
 		wsHost:     wsHost,
 		wsEndpoint: wsEndpoint,
 		timeOut:    timeOut[0],
+		handlers:   make(map[string]int),
 	}
 }
 
@@ -137,22 +140,71 @@ func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	}
 }
 
-func (sw *StreamWrapper) Subscribe(subs ...string) error {
+func (sw *StreamWrapper) Subscribe(f func(web_socket.MessageEvent), subs ...string) error {
+	if len(subs) == 0 {
+		return fmt.Errorf("no subscriptions provided")
+	}
+
+	var newSubs []string
+	for _, sub := range subs {
+		if _, ok := sw.handlers[sub]; !ok {
+			newSubs = append(newSubs, sub)
+		}
+	}
+
+	if len(newSubs) == 0 {
+		return fmt.Errorf("already subscribed to all provided streams")
+	}
+
 	rq := simplejson.New()
 	rq.Set("method", "SUBSCRIBE")
-	rq.Set("params", subs)
+	rq.Set("params", newSubs)
 	rq.Set("id", uuid.New().String())
 	_, err := sw.Call(rq)
-	return err
+	if err != nil {
+		return fmt.Errorf("subscribe error: %w", err)
+	}
+
+	for _, sub := range newSubs {
+		id := sw.socket.Subscribe(f)
+		sw.handlers[sub] = id
+	}
+	return nil
 }
 
 func (sw *StreamWrapper) Unsubscribe(subs ...string) error {
+	if len(subs) == 0 {
+		return fmt.Errorf("no subscriptions provided")
+	}
+
+	var toRemove []string
+	for _, sub := range subs {
+		if _, ok := sw.handlers[sub]; ok {
+			toRemove = append(toRemove, sub)
+		}
+	}
+
+	if len(toRemove) == 0 {
+		return fmt.Errorf("no active subscriptions found")
+	}
+
 	rq := simplejson.New()
 	rq.Set("method", "UNSUBSCRIBE")
-	rq.Set("params", subs)
+	rq.Set("params", toRemove)
 	rq.Set("id", uuid.New().String())
+
 	_, err := sw.Call(rq)
-	return err
+	if err != nil {
+		return fmt.Errorf("unsubscribe error: %w", err)
+	}
+
+	for _, sub := range toRemove {
+		id := sw.handlers[sub]
+		sw.socket.Unsubscribe(id)
+		delete(sw.handlers, sub)
+	}
+
+	return nil
 }
 
 func (sw *StreamWrapper) ListOfSubscriptions() ([]string, error) {

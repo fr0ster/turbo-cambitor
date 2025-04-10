@@ -18,7 +18,7 @@ type StreamInterface interface {
 	Disconnect()
 
 	// Subscribe sends a business-level subscription (e.g., to Binance)
-	Subscribe(subscriptions ...string) error
+	Subscribe(f func(web_socket.MessageEvent), subscriptions ...string) error
 
 	// Unsubscribe removes a subscription from the business stream
 	Unsubscribe(subscriptions ...string) error

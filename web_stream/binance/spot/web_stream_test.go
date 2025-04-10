@@ -113,7 +113,9 @@ func TestStream(t *testing.T) {
 	err := stream.Connect()
 	defer stream.Disconnect()
 	assert.NoError(t, err)
-	err = stream.Subscribe("btcusdt@aggTrade")
+	err = stream.Subscribe(func(me web_socket.MessageEvent) {
+		logrus.Infof("Received message: %+v", me)
+	}, "btcusdt@aggTrade")
 	assert.NoError(t, err)
 	time.Sleep(timeOut)
 	stream.Unsubscribe("btcusdt@aggTrade")

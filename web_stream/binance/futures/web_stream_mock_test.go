@@ -73,11 +73,6 @@ func checkStreamMessage(t *testing.T, stream streamer.StreamInterface, expect st
 	case <-time.After(1 * time.Second):
 		t.Fatalf("Timeout: no message received")
 	}
-	// Close the channel to avoid memory leaks
-	close(msgChan)
-	// Disconnect the stream to clean up resources
-	stream.Disconnect()
-	require.NoError(t, err, "stream.Disconnect() failed")
 }
 
 // func TestKlines is replaced by TestKlines_Debug for single-purpose testability

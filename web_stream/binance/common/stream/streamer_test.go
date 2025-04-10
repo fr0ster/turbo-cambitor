@@ -1,6 +1,7 @@
 package streamer_test
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -54,23 +55,186 @@ func newStreamWrapper() *streamer.StreamWrapper {
 //            TESTS
 // ----------------------------
 
-func TestSubscribe(t *testing.T) {
+// Test for Subscribe, ListOfSubscriptions, and Unsubscribe methods
+func TestSubscribers(t *testing.T) {
 	sw := newStreamWrapper()
-	err := sw.Subscribe("btcusdt@aggTrade")
+	defer func() {
+		err := sw.Unsubscribe("btcusdt@aggTrade")
+		assert.NoError(t, err)
+	}()
+	err := sw.Subscribe(func(me web_socket.MessageEvent) {
+		if me.Error != nil {
+			t.Logf("❌ Received error: %v", me.Error)
+			return
+		}
+		t.Logf("📨 Received message: %s", string(me.Body))
+	},
+		"btcusdt@aggTrade")
 	assert.NoError(t, err)
-}
-
-func TestUnsubscribe(t *testing.T) {
-	sw := newStreamWrapper()
-	err := sw.Unsubscribe("btcusdt@aggTrade")
-	assert.NoError(t, err)
-}
-
-func TestListOfSubscriptions(t *testing.T) {
-	sw := newStreamWrapper()
+	time.Sleep(1 * time.Second)
 	subs, err := sw.ListOfSubscriptions()
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"btcusdt@aggTrade"}, subs)
+	time.Sleep(1 * time.Second)
+}
+func TestMultiSubscribers(t *testing.T) {
+	sw := newStreamWrapper()
+
+	// Перелік стрімів
+	streams := []string{
+		"btcusdt@aggTrade",
+		"btcusdt@depth",
+		"btcusdt@kline_1m",
+	}
+
+	defer func() {
+		err := sw.Unsubscribe(streams...)
+		assert.NoError(t, err)
+	}()
+
+	received := make(map[string]bool)
+	var mu sync.Mutex
+
+	err := sw.Subscribe(func(me web_socket.MessageEvent) {
+		if me.Error != nil {
+			t.Logf("❌ Received error: %v", me.Error)
+			return
+		}
+
+		js, err := simplejson.NewJson(me.Body)
+		if err != nil {
+			t.Logf("❌ JSON parse error: %v", err)
+			t.Logf("↩️ Raw body: %s", string(me.Body))
+			return
+		}
+
+		if e := js.Get("error").MustString(); e != "" {
+			t.Logf("❌ Message has error: %s", e)
+			return
+		}
+
+		stream := js.Get("stream").MustString()
+		if stream == "" {
+			t.Logf("⚠️ Received message without 'stream': %s", string(me.Body))
+			return
+		}
+
+		t.Logf("📨 Received message from stream: %s", stream)
+		mu.Lock()
+		received[stream] = true
+		mu.Unlock()
+	}, streams...)
+
+	assert.NoError(t, err)
+
+	// Дочекайся повідомлень
+	time.Sleep(1 * time.Second)
+
+	subs, err := sw.ListOfSubscriptions()
+	assert.NoError(t, err)
+	assert.ElementsMatch(t, streams, subs)
+
+	// Перевірка, що всі стріми щось отримали
+	for _, s := range streams {
+		mu.Lock()
+		_, ok := received[s]
+		mu.Unlock()
+		assert.True(t, ok, "❌ No message received from stream: %s", s)
+	}
+
+	time.Sleep(1 * time.Second)
+}
+
+func TestParallelSubscribers(t *testing.T) {
+	var wg sync.WaitGroup
+	clientCount := 5
+	streams := []string{"btcusdt@aggTrade", "ethusdt@depth", "bnbusdt@kline_1m"}
+
+	for i := 0; i < clientCount; i++ {
+		wg.Add(1)
+		go func(clientID int) {
+			defer wg.Done()
+
+			sw := newStreamWrapper()
+			defer func() {
+				for _, s := range streams {
+					sw.Unsubscribe(s)
+				}
+			}()
+
+			received := make(chan string, 10)
+
+			handler := func(me web_socket.MessageEvent) {
+				if me.Error != nil {
+					t.Errorf("❌ Client %d received error: %v", clientID, me.Error)
+					return
+				}
+
+				var msg map[string]interface{}
+				err := json.Unmarshal(me.Body, &msg)
+				if err != nil {
+					t.Errorf("❌ Client %d received invalid JSON: %s", clientID, me.Body)
+					return
+				}
+
+				// (optional) handle only mock_data messages
+				if msg["type"] != "mock_data" {
+					t.Logf("ℹ️ Client %d received non-data message: %s", clientID, me.Body)
+					return
+				}
+
+				streamRaw, ok := msg["stream"]
+				if !ok {
+					t.Errorf("⚠️ Client %d: message has no 'stream': %s", clientID, me.Body)
+					return
+				}
+				stream, ok := streamRaw.(string)
+				if !ok {
+					t.Errorf("⚠️ Client %d: 'stream' is not a string: %v", clientID, streamRaw)
+					return
+				}
+				received <- stream
+			}
+
+			// Subscribe to each stream
+			for _, s := range streams {
+				err := sw.Subscribe(handler, s)
+				assert.NoError(t, err, "Client %d failed to subscribe to %s", clientID, s)
+			}
+
+			time.Sleep(1 * time.Second)
+
+			// Check active subscriptions
+			subs, err := sw.ListOfSubscriptions()
+			assert.NoError(t, err, "Client %d failed to list subscriptions", clientID)
+			assert.ElementsMatch(t, streams, subs, "Client %d subscriptions mismatch", clientID)
+
+			// Wait for some messages
+			timeout := time.After(2 * time.Second)
+			streamsReceived := make(map[string]bool)
+
+		loop:
+			for {
+				select {
+				case s := <-received:
+					t.Logf("📨 Client %d received stream: %s", clientID, s)
+					streamsReceived[s] = true
+					if len(streamsReceived) == len(streams) {
+						break loop
+					}
+				case <-timeout:
+					t.Errorf("⏱ Client %d did not receive all streams in time", clientID)
+					break loop
+				}
+			}
+
+			for _, s := range streams {
+				assert.True(t, streamsReceived[s], "Client %d missing stream %s", clientID, s)
+			}
+		}(i)
+	}
+
+	wg.Wait()
 }
 
 func TestCall(t *testing.T) {
@@ -82,7 +246,7 @@ func TestCall(t *testing.T) {
 	resp, err := sw.Call(rq)
 	assert.NoError(t, err)
 	assert.Equal(t, "test-id", resp.Get("id").MustString())
-	assert.Equal(t, []interface{}{"btcusdt@aggTrade"}, resp.Get("result").MustArray())
+	assert.Equal(t, []interface{}{}, resp.Get("result").MustArray())
 }
 
 func TestGracefulCloseStreamer(t *testing.T) {
@@ -142,7 +306,7 @@ func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
 		resp, err := sw.Call(rq)
 		assert.NoError(t, err)
 		assert.Equal(t, "test-id", resp.Get("id").MustString())
-		assert.Equal(t, []interface{}{"btcusdt@aggTrade"}, resp.Get("result").MustArray())
+		assert.Equal(t, []interface{}{}, resp.Get("result").MustArray())
 	}()
 }
 
@@ -173,7 +337,7 @@ func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
 		resp, err := sw.Call(rq)
 		assert.NoError(t, err)
 		assert.Equal(t, "test-id", resp.Get("id").MustString())
-		assert.Equal(t, []interface{}{"btcusdt@aggTrade"}, resp.Get("result").MustArray())
+		assert.Equal(t, []interface{}{}, resp.Get("result").MustArray())
 	}()
 }
 
@@ -282,7 +446,14 @@ func TestPingPongHandlingWithActiveStream(t *testing.T) {
 	assert.NotNil(t, resp)
 
 	// Створюємо бізнес-підписку
-	err = sw.Subscribe("btcusdt@aggTrade")
+	err = sw.Subscribe(func(me web_socket.MessageEvent) {
+		if me.Error != nil {
+			t.Logf("❌ Received error: %v", me.Error)
+			return
+		}
+		messageReceived = true
+		t.Logf("📨 Received message: %s", string(me.Body))
+	}, "btcusdt@aggTrade")
 	assert.NoError(t, err)
 
 	time.Sleep(1 * time.Second)
@@ -309,7 +480,13 @@ func TestStreamWrapperLoggerCalled(t *testing.T) {
 	})
 
 	// Відправляємо щось, щоб викликати логування на receive
-	err := sw.Subscribe("btcusdt@aggTrade")
+	err := sw.Subscribe(func(me web_socket.MessageEvent) {
+		if me.Error != nil {
+			t.Logf("❌ Received error: %v", me.Error)
+			return
+		}
+		t.Logf("📨 Received message: %s", string(me.Body))
+	}, "btcusdt@aggTrade")
 	assert.NoError(t, err)
 
 	select {

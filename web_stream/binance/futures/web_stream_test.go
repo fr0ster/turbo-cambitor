@@ -108,20 +108,49 @@ func TestLiquidationOrder(t *testing.T) {
 
 func TestContractInfo(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.ContractInfo().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	doneCh := make(chan struct{})
+	wrapper :=
+		stream.
+			ContractInfo().
+			SetSymbol("BTCUSDT").
+			SetMessageLogger(func(message web_socket.LogRecord) {
+				logrus.Infof("Received message: %+v", message)
+				// if message.Get("e").MustString() == "CONTRACT_INFO" {
+				doneCh <- struct{}{}
+				// }
+			})
 	assert.NotNil(t, wrapper)
+	err := wrapper.Connect()
+	defer wrapper.Disconnect()
+	assert.NoError(t, err)
+	err = wrapper.Subscribe(func(me web_socket.MessageEvent) {
+		logrus.Infof("Received message: %+v", me)
+		doneCh <- struct{}{}
+	}, "btcusdt@contractInfo")
+	assert.NoError(t, err)
+	select {
+	case <-doneCh:
+		t.Log("Received contract info message")
+	case <-time.After(3 * timeOut):
+		t.Error("Timeout waiting for connection")
+		return
+	}
 }
 
 func TestStream(t *testing.T) {
 	stream := web_stream.
 		NewDefault(true).
 		Stream().
-		SetSymbol("BTCUSDT").
-		SetMessageLogger(mockHandler)
+		SetSymbol("BTCUSDT")
 	err := stream.Connect()
 	defer stream.Disconnect()
 	assert.NoError(t, err)
-	err = stream.Subscribe("btcusdt@aggTrade")
+	err = stream.Subscribe(func(me web_socket.MessageEvent) {
+		js, err := simplejson.NewJson(me.Body)
+		if err == nil {
+			logrus.Infof("Received message: %+v", js)
+		}
+	}, "btcusdt@aggTrade")
 	assert.NoError(t, err)
 	subscribes, err := stream.ListOfSubscriptions()
 	assert.NoError(t, err)
