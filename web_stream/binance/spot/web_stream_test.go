@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
 	web_stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/spot"
 	"github.com/fr0ster/turbo-restler/web_socket"
@@ -107,16 +108,20 @@ func TestContractInfo(t *testing.T) {
 func TestStream(t *testing.T) {
 	stream := web_stream.
 		NewDefault(true).
-		Stream().
-		SetSymbol("BTCUSDT").
-		SetMessageLogger(mockHandler)
+		Stream()
 	err := stream.Connect()
 	defer stream.Disconnect()
 	assert.NoError(t, err)
 	err = stream.Subscribe(func(me web_socket.MessageEvent) {
-		logrus.Infof("Received message: %+v", me)
+		js, err := simplejson.NewJson(me.Body)
+		if err != nil {
+			logrus.Errorf("Error parsing JSON: %v", err)
+			return
+		}
+		logrus.Infof("Received message: %+v", js)
 	}, "btcusdt@aggTrade")
 	assert.NoError(t, err)
 	time.Sleep(timeOut)
 	stream.Unsubscribe("btcusdt@aggTrade")
+	<-time.After(time.Second * 2)
 }

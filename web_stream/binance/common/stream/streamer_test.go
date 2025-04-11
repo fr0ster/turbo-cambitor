@@ -42,13 +42,13 @@ func newStreamWrapper() *streamer.StreamWrapper {
 		return web_socket.NewWebSocketWrapper(conn), nil
 	}
 
-	sw := streamer.NewStreamWrapper(factory, common.WsScheme(scheme), common.WsHost(host), common.WsEndpoint(endpoint)).SetSymbol("btcusdt")
+	sw := streamer.NewStreamWrapper(factory, common.WsScheme(scheme), common.WsHost(host), common.WsEndpoint(endpoint))
 
 	if err := sw.Connect(); err != nil {
 		panic(err)
 	}
 
-	return sw.(*streamer.StreamWrapper)
+	return sw
 }
 
 // ----------------------------

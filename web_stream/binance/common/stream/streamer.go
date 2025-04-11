@@ -2,7 +2,6 @@ package streamer
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -126,7 +125,7 @@ func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-	if err := sw.socket.Send(jsonBytes); err != nil {
+	if err := sw.socket.Send(web_socket.WriteEvent{Body: jsonBytes}); err != nil {
 		return nil, fmt.Errorf("send error: %w", err)
 	}
 
@@ -224,14 +223,6 @@ func (sw *StreamWrapper) ListOfSubscriptions() ([]string, error) {
 		}
 	}
 	return result, nil
-}
-
-func (sw *StreamWrapper) SetSymbol(symbol string) StreamInterface {
-	sw.symbol = symbol
-	if symbol != "" {
-		sw.wsEndpoint = common.WsEndpoint(fmt.Sprintf("/%s/%s", sw.wsEndpoint, strings.ToLower(symbol)))
-	}
-	return sw
 }
 
 func (sw *StreamWrapper) GetConnection() web_socket.WebSocketInterface {

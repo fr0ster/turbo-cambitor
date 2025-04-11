@@ -26,9 +26,6 @@ type StreamInterface interface {
 	// ListOfSubscriptions returns the current business-level subscriptions
 	ListOfSubscriptions() ([]string, error)
 
-	// SetSymbol sets the symbol (e.g., BTCUSDT)
-	SetSymbol(symbol string) StreamInterface
-
 	// GetConnection returns the underlying WebSocketInterface, if it needs to be passed further
 	GetConnection() web_socket.WebSocketInterface
 

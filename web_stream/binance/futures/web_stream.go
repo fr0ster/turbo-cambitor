@@ -7,19 +7,20 @@ import (
 )
 
 type WebStream interface {
-	Klines(interval string) stream.StreamInterface
-	ContinuousKlines(interval string, contractType string) stream.StreamInterface
-	PartialBookDepths(level builder.DepthStreamLevel, rates ...builder.DepthStreamRate) stream.StreamInterface
-	DiffBookDepths(rates ...builder.DepthStreamRate) stream.StreamInterface
-	AggTrades() stream.StreamInterface
-	Trades() stream.StreamInterface
-	BookTickers() stream.StreamInterface
-	Tickers() stream.StreamInterface
-	MiniTickers() stream.StreamInterface
-	UserData(listenKey string) stream.StreamInterface
-	MarkPrice() stream.StreamInterface
-	LiquidationOrder() stream.StreamInterface
-	ContractInfo() stream.StreamInterface
+	Klines(interval string) *builder.StreamBuilder
+	ContinuousKlines(interval string, contractType string) *builder.StreamBuilder
+	PartialBookDepths(level builder.DepthStreamLevel, rates ...builder.DepthStreamRate) *builder.StreamBuilder
+	DiffBookDepths(rates ...builder.DepthStreamRate) *builder.StreamBuilder
+	AggTrades() *builder.StreamBuilder
+	Trades() *builder.StreamBuilder
+	BookTickers() *builder.StreamBuilder
+	Tickers() *builder.StreamBuilder
+	MiniTickers() *builder.StreamBuilder
+	UserData(listenKey string) *builder.StreamBuilder
+	MarkPrice() *builder.StreamBuilder
+	LiquidationOrder() *builder.StreamBuilder
+	ContractInfo() *builder.StreamBuilder
+	SetSymbol(symbol string) stream.StreamInterface
 	Stream() stream.StreamInterface
 }
 
@@ -33,10 +34,11 @@ func NewDefault(useTestNet ...bool) WebStream {
 		useTestNet = append(useTestNet, false)
 	}
 	if useTestNet[0] {
-		wsEndpoint = "fstream.binancefuture.com/ws"
+		wsHost = "fstream.binance.com/ws"
+		wsEndpoint = ""
 	} else {
-		wsHost = "fstream.binance.com"
-		wsEndpoint = "/ws"
+		wsHost = "fstream.binance.com/ws"
+		wsEndpoint = ""
 	}
 	wsScheme = common.WsSchemeWSS
 	return builder.NewStreamBuilder(wsScheme, wsHost, wsEndpoint)

@@ -48,14 +48,14 @@ func TestStreamBuilder_AggTrades(t *testing.T) {
 	// Конструктор StreamBuilder (тут wsEndpoint буде "")
 	builder := common_web_stream.NewStreamBuilder(
 		common.WsScheme("ws"),
-		common.WsHost(hostOnly),
-		common.WsEndpoint("/ws"), // базовий префікс, додається до кожного endpoint
+		common.WsHost(hostOnly+"/ws"),
+		common.WsEndpoint(""),
 		symbol,
 	)
 
 	stream := builder.AggTrades()
 
-	err := stream.Connect()
+	err := stream.Stream().Connect()
 	if err != nil {
 		t.Fatalf("failed to connect to mock websocket: %v", err)
 	}

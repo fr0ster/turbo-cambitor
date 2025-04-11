@@ -37,6 +37,10 @@ func mockErrHandler(err error) error {
 func TestKlines(t *testing.T) {
 	stream := web_stream.NewDefault(true)
 	wrapper := stream.Klines("1m").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	err := wrapper.Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
+	time.Sleep(timeOut * 5)
 	assert.NotNil(t, wrapper)
 }
 
@@ -114,17 +118,31 @@ func TestContractInfo(t *testing.T) {
 			ContractInfo().
 			SetSymbol("BTCUSDT").
 			SetMessageLogger(func(message web_socket.LogRecord) {
-				logrus.Infof("Received message: %+v", message)
-				// if message.Get("e").MustString() == "CONTRACT_INFO" {
-				doneCh <- struct{}{}
-				// }
+				js, err := simplejson.NewJson(message.Body)
+				if err != nil {
+					logrus.Errorf("Error parsing JSON: %v", err)
+					return
+				}
+				kind := web_socket.MessageKind(js.Get("Kind").MustInt())
+				if kind == web_socket.KindData {
+					b := js.Get("Body").MustString()
+					logrus.Infof("Received message: %s", b)
+					// if message.Get("e").MustString() == "CONTRACT_INFO" {
+					doneCh <- struct{}{}
+					// }
+				}
 			})
 	assert.NotNil(t, wrapper)
 	err := wrapper.Connect()
 	defer wrapper.Disconnect()
 	assert.NoError(t, err)
 	err = wrapper.Subscribe(func(me web_socket.MessageEvent) {
-		logrus.Infof("Received message: %+v", me)
+		js, err := simplejson.NewJson(me.Body)
+		if err != nil {
+			logrus.Errorf("Error parsing JSON: %v", err)
+			return
+		}
+		logrus.Infof("Received message: %+v", js)
 		doneCh <- struct{}{}
 	}, "btcusdt@contractInfo")
 	assert.NoError(t, err)
@@ -140,8 +158,7 @@ func TestContractInfo(t *testing.T) {
 func TestStream(t *testing.T) {
 	stream := web_stream.
 		NewDefault(true).
-		Stream().
-		SetSymbol("BTCUSDT")
+		Stream()
 	err := stream.Connect()
 	defer stream.Disconnect()
 	assert.NoError(t, err)

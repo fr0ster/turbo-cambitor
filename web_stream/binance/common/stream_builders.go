@@ -1,6 +1,7 @@
 package common_web_stream
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -18,8 +19,8 @@ func NewStreamBuilder(scheme common.WsScheme, host common.WsHost, endpoint commo
 	}
 	return &StreamBuilder{
 		wsScheme:   scheme,
-		wsHost:     host,
-		wsEndpoint: endpoint,
+		wsHost:     common.WsHost(string(host) + string(endpoint)),
+		wsEndpoint: "",
 		symbol:     symbol[0],
 	}
 }
@@ -31,11 +32,14 @@ type StreamBuilder struct {
 	symbol     string
 }
 
-func (wa *StreamBuilder) makeStream(endpoint string) stream.StreamInterface {
-	fullEndpoint := string(wa.wsEndpoint) + endpoint
-
+func (wa *StreamBuilder) makeStream() stream.StreamInterface {
 	factory := func() (web_socket.WebSocketInterface, error) {
-		url := string(wa.wsScheme) + "://" + string(wa.wsHost) + fullEndpoint
+		url := ""
+		if wa.wsEndpoint != "" {
+			url = string(wa.wsScheme) + "://" + string(wa.wsHost) + "/" + string(wa.wsEndpoint)
+		} else {
+			url = string(wa.wsScheme) + "://" + string(wa.wsHost)
+		}
 		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 		if err != nil {
 			return nil, err
@@ -47,68 +51,91 @@ func (wa *StreamBuilder) makeStream(endpoint string) stream.StreamInterface {
 		factory,
 		wa.wsScheme,
 		wa.wsHost,
-		common.WsEndpoint(fullEndpoint),
-	).SetSymbol(wa.symbol)
+		wa.wsEndpoint,
+	)
 }
 
-func (wa *StreamBuilder) Klines(interval string) stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@kline_" + interval)
+func (wa *StreamBuilder) Klines(interval string) *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint("@kline_" + interval)
+	return wa
 }
 
-func (wa *StreamBuilder) ContinuousKlines(interval, contractType string) stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + strings.ToLower(contractType) + "@continuousKline_" + interval)
+func (wa *StreamBuilder) ContinuousKlines(interval, contractType string) *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(contractType) + "@continuousKline_" + interval)
+	return wa
 }
 
-func (wa *StreamBuilder) PartialBookDepths(level DepthStreamLevel, rates ...DepthStreamRate) stream.StreamInterface {
+func (wa *StreamBuilder) PartialBookDepths(level DepthStreamLevel, rates ...DepthStreamRate) *StreamBuilder {
 	if len(rates) > 0 {
-		return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)) + "@" + strconv.Itoa(int(rates[0])) + "ms")
+		wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)) + "@" + strconv.Itoa(int(rates[0])) + "ms")
+		return wa
 	}
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)))
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@depth" + strconv.Itoa(int(level)))
+	return wa
 }
 
-func (wa *StreamBuilder) DiffBookDepths(rates ...DepthStreamRate) stream.StreamInterface {
+func (wa *StreamBuilder) DiffBookDepths(rates ...DepthStreamRate) *StreamBuilder {
 	if len(rates) > 0 {
-		return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth@" + strconv.Itoa(int(rates[0])) + "ms")
+		wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@depth@" + strconv.Itoa(int(rates[0])) + "ms")
+		return wa
 	}
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@depth")
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@depth")
+	return wa
 }
 
-func (wa *StreamBuilder) AggTrades() stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@aggTrade")
+func (wa *StreamBuilder) AggTrades() *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@aggTrade")
+	return wa
 }
 
-func (wa *StreamBuilder) Trades() stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@trade")
+func (wa *StreamBuilder) Trades() *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@trade")
+	return wa
 }
 
-func (wa *StreamBuilder) BookTickers() stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@bookTicker")
+func (wa *StreamBuilder) BookTickers() *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@bookTicker")
+	return wa
 }
 
-func (wa *StreamBuilder) Tickers() stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@ticker")
+func (wa *StreamBuilder) Tickers() *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@ticker")
+	return wa
 }
 
-func (wa *StreamBuilder) MiniTickers() stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@miniTicker")
+func (wa *StreamBuilder) MiniTickers() *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@miniTicker")
+	return wa
 }
 
-func (wa *StreamBuilder) UserData(listenKey string) stream.StreamInterface {
-	return wa.makeStream("/" + listenKey)
+func (wa *StreamBuilder) UserData(listenKey string) *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint("/" + listenKey)
+	return wa
 }
 
-func (wa *StreamBuilder) MarkPrice() stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@markPrice")
+func (wa *StreamBuilder) MarkPrice() *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@markPrice")
+	return wa
 }
 
-func (wa *StreamBuilder) LiquidationOrder() stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "@forceOrder")
+func (wa *StreamBuilder) LiquidationOrder() *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@forceOrder")
+	return wa
 }
 
-func (wa *StreamBuilder) ContractInfo() stream.StreamInterface {
-	return wa.makeStream("/" + strings.ToLower(wa.symbol) + "!contractInfo")
+func (wa *StreamBuilder) ContractInfo() *StreamBuilder {
+	wa.wsEndpoint = common.WsEndpoint(strings.ToLower(wa.symbol) + "@markPrice")
+	return wa
+}
+
+func (wa *StreamBuilder) SetSymbol(symbol string) stream.StreamInterface {
+	wa.symbol = symbol
+	if symbol != "" {
+		wa.wsEndpoint = common.WsEndpoint(fmt.Sprintf("%s%s", strings.ToLower(symbol), wa.wsEndpoint))
+	}
+	return wa.makeStream()
 }
 
 func (wa *StreamBuilder) Stream() stream.StreamInterface {
-	return wa.makeStream("")
+	return wa.makeStream()
 }
