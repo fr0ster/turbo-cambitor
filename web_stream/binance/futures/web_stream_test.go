@@ -16,16 +16,13 @@ const (
 	timeOut = 1 * time.Second
 )
 
-// Mock handler for WebSocket messages
-func genMockHandler(id string) func(message *simplejson.Json) {
-	return func(message *simplejson.Json) {
-		if message.Get("e").MustString() == id {
-			logrus.Infof("Received message: %+v", message)
-		}
-	}
-}
 func mockHandler(message web_socket.LogRecord) {
-	logrus.Infof("Log record: %+v", message)
+	jr, err := simplejson.NewJson(message.Body)
+	if err != nil {
+		logrus.Errorf("Error parsing JSON: %v", err)
+		return
+	}
+	logrus.Infof("Log record: %+v", jr)
 }
 
 // Mock error handler for WebSocket errors
@@ -36,107 +33,138 @@ func mockErrHandler(err error) error {
 
 func TestKlines(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.Klines("1m").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
-	err := wrapper.Connect()
+	wrapper, err := stream.Klines("1m").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
-	time.Sleep(timeOut * 5)
+	time.Sleep(timeOut)
 	assert.NotNil(t, wrapper)
 }
 
 func TestContinuousKlines(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.ContinuousKlines("1m", "BTCUSDT").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.ContinuousKlines("1m", "BTCUSDT").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestPartialBookDepths(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.PartialBookDepths(common.DepthStreamLevel5, common.DepthStreamRate100ms).SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.PartialBookDepths(common.DepthStreamLevel5, common.DepthStreamRate100ms).SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestDiffBookDepths(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.DiffBookDepths(common.DepthStreamRate100ms).SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.DiffBookDepths(common.DepthStreamRate100ms).SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestAggTrades(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.AggTrades().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.AggTrades().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestTrades(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.Trades().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.Trades().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestBookTickers(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.BookTickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.BookTickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestTickers(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.Tickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.Tickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestMiniTickers(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.MiniTickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.MiniTickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestUserData(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.UserData("listenKey").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.UserData("listenKey").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestMarkPrice(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.MarkPrice().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.MarkPrice().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestLiquidationOrder(t *testing.T) {
 	stream := web_stream.NewDefault(true)
-	wrapper := stream.LiquidationOrder().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler)
+	wrapper, err := stream.LiquidationOrder().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 }
 
 func TestContractInfo(t *testing.T) {
-	stream := web_stream.NewDefault(true)
-	doneCh := make(chan struct{})
-	wrapper :=
-		stream.
-			ContractInfo().
-			SetSymbol("BTCUSDT").
-			SetMessageLogger(func(message web_socket.LogRecord) {
-				js, err := simplejson.NewJson(message.Body)
-				if err != nil {
-					logrus.Errorf("Error parsing JSON: %v", err)
+	doneCh := make(chan struct{}, 1)
+	stream, err := web_stream.NewDefault(true).
+		ContractInfo().
+		SetSymbol("BTCUSDT").
+		SetMessageLogger(func(message web_socket.LogRecord) {
+			if message.Body == nil {
+				return
+			}
+			js, err := simplejson.NewJson(message.Body)
+			if err != nil {
+				logrus.Errorf("Error parsing JSON: %v", err)
+				logrus.Errorf("Message: %s", message.Body)
+				return
+			}
+			kind := web_socket.MessageKind(js.Get("Kind").MustInt())
+			if kind == web_socket.KindData {
+				b := js.Get("Body").MustString()
+				if b == "" {
 					return
 				}
-				kind := web_socket.MessageKind(js.Get("Kind").MustInt())
-				if kind == web_socket.KindData {
-					b := js.Get("Body").MustString()
-					logrus.Infof("Received message: %s", b)
-					// if message.Get("e").MustString() == "CONTRACT_INFO" {
-					doneCh <- struct{}{}
-					// }
+				logrus.Infof("Received message: %s", b)
+				// if message.Get("e").MustString() == "CONTRACT_INFO" {
+				select {
+				case doneCh <- struct{}{}:
+				default:
 				}
-			})
-	assert.NotNil(t, wrapper)
-	err := wrapper.Connect()
-	defer wrapper.Disconnect()
+				// }
+			}
+		}).Connect()
+	// SetMessageLogger(mockHandler).
+	// Connect()
 	assert.NoError(t, err)
-	err = wrapper.Subscribe(func(me web_socket.MessageEvent) {
+	assert.NotNil(t, stream)
+	defer stream.Disconnect()
+	assert.NoError(t, err)
+	err = stream.Subscribe(func(me web_socket.MessageEvent) {
 		js, err := simplejson.NewJson(me.Body)
 		if err != nil {
 			logrus.Errorf("Error parsing JSON: %v", err)
@@ -145,7 +173,12 @@ func TestContractInfo(t *testing.T) {
 		logrus.Infof("Received message: %+v", js)
 		doneCh <- struct{}{}
 	}, "btcusdt@contractInfo")
+	// err = stream.Subscribe(nil, "btcusdt@contractInfo")
 	assert.NoError(t, err)
+	subs, err := stream.ListOfSubscriptions()
+	assert.NoError(t, err)
+	assert.NotNil(t, subs)
+	time.Sleep(timeOut)
 	select {
 	case <-doneCh:
 		t.Log("Received contract info message")
@@ -153,13 +186,14 @@ func TestContractInfo(t *testing.T) {
 		t.Error("Timeout waiting for connection")
 		return
 	}
+	err = stream.Unsubscribe("btcusdt@contractInfo")
+	assert.NoError(t, err)
 }
 
 func TestStream(t *testing.T) {
-	stream := web_stream.
+	stream, err := web_stream.
 		NewDefault(true).
-		Stream()
-	err := stream.Connect()
+		Stream().Connect()
 	defer stream.Disconnect()
 	assert.NoError(t, err)
 	err = stream.Subscribe(func(me web_socket.MessageEvent) {
@@ -168,6 +202,21 @@ func TestStream(t *testing.T) {
 			logrus.Infof("Received message: %+v", js)
 		}
 	}, "btcusdt@aggTrade")
+	assert.NoError(t, err)
+	subscribes, err := stream.ListOfSubscriptions()
+	assert.NoError(t, err)
+	assert.NotNil(t, subscribes)
+	time.Sleep(timeOut)
+	stream.Unsubscribe("btcusdt@aggTrade")
+}
+
+func TestStaticStream(t *testing.T) {
+	stream, err := web_stream.
+		New("fstream.binance.com/ws", "btcusdt@aggTrade", "wss").
+		Stream().SetMessageLogger(mockHandler).Connect()
+	defer stream.Disconnect()
+	assert.NoError(t, err)
+	time.Sleep(timeOut)
 	assert.NoError(t, err)
 	subscribes, err := stream.ListOfSubscriptions()
 	assert.NoError(t, err)

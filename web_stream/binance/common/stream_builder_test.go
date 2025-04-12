@@ -55,7 +55,7 @@ func TestStreamBuilder_AggTrades(t *testing.T) {
 
 	stream := builder.AggTrades()
 
-	err := stream.Stream().Connect()
+	_, err := stream.Stream().Connect()
 	if err != nil {
 		t.Fatalf("failed to connect to mock websocket: %v", err)
 	}

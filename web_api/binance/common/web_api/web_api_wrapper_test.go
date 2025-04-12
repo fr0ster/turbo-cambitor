@@ -63,7 +63,7 @@ func TestWebApiWrapper_Echo_ReadWrite(t *testing.T) {
 	})
 
 	// ⏩ Надсилаємо запит та читаємо відповідь
-	resp, err := wa.Call(js)
+	resp, err := wa.SetTimeOut(time.Second).Call(js)
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
 

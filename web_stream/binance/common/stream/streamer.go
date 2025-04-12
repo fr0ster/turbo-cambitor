@@ -15,25 +15,24 @@ import (
 type StreamWrapper struct {
 	socket     web_socket.WebSocketInterface
 	factory    func() (web_socket.WebSocketInterface, error)
-	symbol     string
 	wsScheme   common.WsScheme
 	wsHost     common.WsHost
 	wsEndpoint common.WsEndpoint
 	timeOut    time.Duration
 	mu         sync.Mutex
 
+	readTimeout  *time.Duration
+	writeTimeout *time.Duration
+
 	autoReconnect        bool
 	reconnectStopChan    chan struct{}
 	maxReconnectAttempts int
 	reconnectInterval    time.Duration
 
-	// для контролю паралельного доступу
-	reconnectMu sync.Mutex
-
 	handlers map[string]int
 }
 
-// NewStreamWrapper створює новий StreamWrapper з фабрикою сокета
+// NewStreamWrapper creates a new StreamWrapper with a socket factory
 func NewStreamWrapper(
 	factory func() (web_socket.WebSocketInterface, error),
 	wsScheme common.WsScheme,
@@ -41,9 +40,15 @@ func NewStreamWrapper(
 	wsEndpoint common.WsEndpoint,
 	timeOut ...time.Duration) *StreamWrapper {
 	if len(timeOut) == 0 {
-		timeOut = append(timeOut, 10*time.Second)
+		timeOut = append(timeOut, time.Second)
+	}
+
+	socket, err := factory()
+	if err != nil {
+		return nil
 	}
 	return &StreamWrapper{
+		socket:     socket,
 		factory:    factory,
 		wsScheme:   wsScheme,
 		wsHost:     wsHost,
@@ -53,18 +58,15 @@ func NewStreamWrapper(
 	}
 }
 
-func (sw *StreamWrapper) Connect() error {
+func (sw *StreamWrapper) Connect() (*StreamWrapper, error) {
 	sw.mu.Lock()
 	defer sw.mu.Unlock()
 
-	socket, err := sw.factory()
-	if err != nil {
-		return fmt.Errorf("connect failed: %w", err)
+	if sw.socket == nil {
+		return nil, fmt.Errorf("socket is nil")
 	}
-
-	socket.Open()
-	sw.socket = socket
-	return nil
+	sw.socket.Open()
+	return sw, nil
 }
 
 func (sw *StreamWrapper) Reconnect(maxAttempts int, delay time.Duration) error {
@@ -105,7 +107,7 @@ func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	resultC := make(chan *simplejson.Json, 1)
 	errC := make(chan error, 1)
 
-	subID := sw.socket.Subscribe(func(evt web_socket.MessageEvent) {
+	subID, err := sw.socket.Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			errC <- evt.Error
 			return
@@ -119,6 +121,9 @@ func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 			resultC <- resp
 		}
 	})
+	if err != nil {
+		return nil, fmt.Errorf("subscribe error: %w", err)
+	}
 	defer sw.socket.Unsubscribe(subID)
 
 	jsonBytes, err := rq.MarshalJSON()
@@ -165,7 +170,10 @@ func (sw *StreamWrapper) Subscribe(f func(web_socket.MessageEvent), subs ...stri
 	}
 
 	for _, sub := range newSubs {
-		id := sw.socket.Subscribe(f)
+		id, err := sw.socket.Subscribe(f)
+		if err != nil {
+			continue
+		}
 		sw.handlers[sub] = id
 	}
 	return nil
@@ -231,6 +239,22 @@ func (sw *StreamWrapper) GetConnection() web_socket.WebSocketInterface {
 
 func (sw *StreamWrapper) SetMaxReconnectAttempts(n int) StreamInterface {
 	sw.maxReconnectAttempts = n
+	return sw
+}
+
+func (sw *StreamWrapper) SetReadTimeout(timeout time.Duration) StreamInterface {
+	sw.readTimeout = &timeout
+	if sw.socket != nil {
+		sw.socket.SetReadTimeout(timeout)
+	}
+	return sw
+}
+
+func (sw *StreamWrapper) SetWriteTimeout(timeout time.Duration) StreamInterface {
+	sw.writeTimeout = &timeout
+	if sw.socket != nil {
+		sw.socket.SetWriteTimeout(timeout)
+	}
 	return sw
 }
 

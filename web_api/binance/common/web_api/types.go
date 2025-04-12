@@ -2,6 +2,7 @@ package common_web_api
 
 import (
 	"sync"
+	"time"
 
 	common "github.com/fr0ster/turbo-cambitor/common"
 	web_socket "github.com/fr0ster/turbo-restler/web_socket"
@@ -27,5 +28,6 @@ type (
 		mutex      *sync.Mutex
 		sign       signature.Sign
 		connection web_socket.WebSocketInterface
+		timeout    *time.Duration
 	}
 )

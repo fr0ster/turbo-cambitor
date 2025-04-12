@@ -2,6 +2,7 @@ package common_web_api
 
 import (
 	"sync"
+	"time"
 
 	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-cambitor/common"
@@ -46,6 +47,11 @@ func New(
 	}
 }
 
+func (wa *WebApiWrapper) SetTimeOut(timeout time.Duration) *WebApiWrapper {
+	wa.timeout = &timeout
+	return wa
+}
+
 func (wa *WebApiWrapper) Call(js *simplejson.Json) (result *simplejson.Json, err error) {
 	wa.mutex.Lock()
 	defer wa.mutex.Unlock()
@@ -54,6 +60,11 @@ func (wa *WebApiWrapper) Call(js *simplejson.Json) (result *simplejson.Json, err
 	rq, err := js.MarshalJSON()
 	if err != nil {
 		return nil, err
+	}
+	if wa.timeout != nil {
+		if err := writer.SetWriteDeadline(time.Now().Add(*wa.timeout)); err != nil {
+			return nil, err
+		}
 	}
 	if err := writer.WriteMessage(websocket.TextMessage, rq); err != nil {
 		return nil, err
@@ -64,21 +75,11 @@ func (wa *WebApiWrapper) Call(js *simplejson.Json) (result *simplejson.Json, err
 	if err != nil {
 		return nil, err
 	}
+	if wa.timeout != nil {
+		if err := reader.SetReadDeadline(time.Now().Add(*wa.timeout)); err != nil {
+			return nil, err
+		}
+	}
 	result, err = simplejson.NewJson(resp)
 	return
-}
-
-func (wa *WebApiWrapper) Write(js *simplejson.Json) error {
-	wa.mutex.Lock()
-	defer wa.mutex.Unlock()
-
-	writer := wa.connection.GetWriter()
-	rq, err := js.MarshalJSON()
-	if err != nil {
-		return err
-	}
-	if err := writer.WriteMessage(websocket.TextMessage, rq); err != nil {
-		return err
-	}
-	return nil
 }

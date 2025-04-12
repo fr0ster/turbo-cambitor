@@ -1,6 +1,8 @@
 package common_web_api
 
 import (
+	"time"
+
 	"github.com/bitly/go-simplejson"
 	request "github.com/fr0ster/turbo-cambitor/web_api/binance/common/request"
 )
@@ -48,5 +50,6 @@ type WebApiInterface interface {
 	Unlock()
 
 	// Generic call
+	SetTimeOut(timeout time.Duration) *WebApiWrapper
 	Call(js *simplejson.Json) (*simplejson.Json, error)
 }

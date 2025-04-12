@@ -1,8 +1,10 @@
 package futures_web_stream_test
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -28,6 +30,22 @@ var ResponseByPath = map[string]string{
 	"/ws/btcusdt@markPrice":                   `{"stream":"markPrice","data":"mock_mark"}`,
 	"/ws/btcusdt@forceOrder":                  `{"stream":"liquidation","data":"mock_liq"}`,
 	"/ws/btcusdtperpetual@continuousKline_1m": `{"stream":"ckline","data":"mock_cont_kline"}`,
+}
+
+var server *http.Server
+
+func TestMain(m *testing.M) {
+	// Стартуємо мок-сервер один раз перед усіма тестами
+	server = StartMockWSServer(":9090")
+
+	// Запускаємо всі тести
+	code := m.Run()
+
+	// Шатунимо сервер після завершення всіх тестів
+	_ = server.Shutdown(context.Background())
+
+	// Виходимо з відповідним кодом
+	os.Exit(code)
 }
 
 func StartMockWSServer(addr string) *http.Server {
@@ -57,7 +75,7 @@ func StartMockWSServer(addr string) *http.Server {
 
 func checkStreamMessage(t *testing.T, stream streamer.StreamInterface, expect string) {
 	msgChan := make(chan string, 1)
-	err := stream.Connect()
+	_, err := stream.Connect()
 	stream.SetMessageLogger(func(msg web_socket.LogRecord) {
 		select {
 		case msgChan <- string(msg.Body):
@@ -77,67 +95,56 @@ func checkStreamMessage(t *testing.T, stream streamer.StreamInterface, expect st
 
 // func TestKlines is replaced by TestKlines_Debug for single-purpose testability
 func TestKlines_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.Klines("1m").SetSymbol("btcusdt"), "mock_kline")
 }
 
 func TestAggTrades_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.AggTrades().SetSymbol("btcusdt"), "mock_agg")
 }
 
 func TestTrades_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.Trades().SetSymbol("btcusdt"), "mock_trade")
 }
 
 func TestMiniTickers_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.MiniTickers().SetSymbol("btcusdt"), "mock_mini")
 }
 
 func TestTickers_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.Tickers().SetSymbol("btcusdt"), "mock_ticker")
 }
 
 func TestBookTickers_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.BookTickers().SetSymbol("btcusdt"), "mock_book")
 }
 
 func TestPartialBookDepths_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.PartialBookDepths(5, 100).SetSymbol("btcusdt"), "mock_depth5")
 }
 
 func TestDiffBookDepths_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.DiffBookDepths(100).SetSymbol("btcusdt"), "mock_depth")
 }
 
 func TestMarkPrice_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.MarkPrice().SetSymbol("btcusdt"), "mock_mark")
 }
 
 func TestLiquidationOrder_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.LiquidationOrder().SetSymbol("btcusdt"), "mock_liq")
 }
 
 func TestContinuousKlines_Debug(t *testing.T) {
-	StartMockWSServer(":9090")
-	ws := web_stream.New("localhost:9090", "/ws", "ws")
+	ws := web_stream.New("localhost:9090", "ws", "ws")
 	checkStreamMessage(t, ws.ContinuousKlines("1m", "perpetual").SetSymbol("btcusdt"), "mock_cont_kline")
 }

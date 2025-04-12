@@ -34,11 +34,11 @@ func NewDefault(useTestNet ...bool) WebStream {
 		useTestNet = append(useTestNet, false)
 	}
 	if useTestNet[0] {
-		wsHost = "fstream.binance.com/ws"
-		wsEndpoint = ""
+		wsHost = "fstream.binance.com"
+		wsEndpoint = "ws"
 	} else {
-		wsHost = "fstream.binance.com/ws"
-		wsEndpoint = ""
+		wsHost = "fstream.binance.com"
+		wsEndpoint = "ws"
 	}
 	wsScheme = common.WsSchemeWSS
 	return builder.NewStreamBuilder(wsScheme, wsHost, wsEndpoint)

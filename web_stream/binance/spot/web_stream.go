@@ -35,10 +35,10 @@ func NewDefault(useTestNet ...bool) WebStream {
 	}
 	if useTestNet[0] {
 		wsHost = "testnet.binance.vision"
-		wsEndpoint = "/ws"
+		wsEndpoint = "ws"
 	} else {
 		wsHost = "stream.binance.com:9443"
-		wsEndpoint = "/ws"
+		wsEndpoint = "ws"
 	}
 	wsScheme = common.WsSchemeWSS
 	return builder.NewStreamBuilder(wsScheme, wsHost, wsEndpoint)

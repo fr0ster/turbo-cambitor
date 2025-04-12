@@ -44,7 +44,7 @@ func newStreamWrapper() *streamer.StreamWrapper {
 
 	sw := streamer.NewStreamWrapper(factory, common.WsScheme(scheme), common.WsHost(host), common.WsEndpoint(endpoint))
 
-	if err := sw.Connect(); err != nil {
+	if _, err := sw.Connect(); err != nil {
 		panic(err)
 	}
 
@@ -503,4 +503,21 @@ func TestStreamWrapperLoggerCalled(t *testing.T) {
 	assert.Nil(t, logErr)
 
 	sw.Disconnect()
+}
+
+func TestReadWriteTimeout(t *testing.T) {
+	sw := newStreamWrapper()
+	// Встановлюємо таймаут на читання
+	sw.SetReadTimeout(1 * time.Second)
+	// Встановлюємо таймаут на запис
+	sw.SetWriteTimeout(1 * time.Second)
+
+	rq := simplejson.New()
+	rq.Set("method", "LIST_SUBSCRIPTIONS")
+	rq.Set("id", "test-id")
+
+	resp, err := sw.Call(rq)
+	assert.NoError(t, err)
+	assert.Equal(t, "test-id", resp.Get("id").MustString())
+	assert.Equal(t, []interface{}{}, resp.Get("result").MustArray())
 }

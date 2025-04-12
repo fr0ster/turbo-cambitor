@@ -9,7 +9,7 @@ import (
 // StreamInterface describes only the business-level logic for working with streams
 type StreamInterface interface {
 	// Connect establishes a WebSocket connection and starts the stream
-	Connect() error
+	Connect() (*StreamWrapper, error)
 
 	// Reconnect recreates the connection with retry attempts
 	Reconnect(maxAttempts int, delay time.Duration) error
