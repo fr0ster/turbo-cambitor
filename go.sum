@@ -11,6 +11,10 @@ github.com/fr0ster/turbo-restler v0.14.15 h1:9agPFz4Bfw93eDIP4bw232OjQFVRv/xYdef
 github.com/fr0ster/turbo-restler v0.14.15/go.mod h1:v0bprtuR2e6PJxwqcsJjrd5UYiqb9V3TNn83VzOm+fo=
 github.com/fr0ster/turbo-restler v0.14.16 h1:QrkGS/d6LN1P3MnjRGvVV2NVeLTkTpZ2gPajjOowVcU=
 github.com/fr0ster/turbo-restler v0.14.16/go.mod h1:v0bprtuR2e6PJxwqcsJjrd5UYiqb9V3TNn83VzOm+fo=
+github.com/fr0ster/turbo-restler v0.14.17 h1:AQYX1hLNb4b+n7PtTGr96K7qhxiqW1bvagnNxFK3WRI=
+github.com/fr0ster/turbo-restler v0.14.17/go.mod h1:v0bprtuR2e6PJxwqcsJjrd5UYiqb9V3TNn83VzOm+fo=
+github.com/fr0ster/turbo-restler v0.14.18 h1:vVUDZh4Cr17ji2XNyCr5xCjA2ASAU9dAQ09aqxtJ6nI=
+github.com/fr0ster/turbo-restler v0.14.18/go.mod h1:v0bprtuR2e6PJxwqcsJjrd5UYiqb9V3TNn83VzOm+fo=
 github.com/fr0ster/turbo-signer v0.1.8 h1:c4IAtoYw9AF9AejLJmiwGCrJVXyReBEMSKgqp8ZgHPo=
 github.com/fr0ster/turbo-signer v0.1.8/go.mod h1:y4gKUqSg//bll3Z6QyZX13ILXWv0nlQI1MQF7QNr0to=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
