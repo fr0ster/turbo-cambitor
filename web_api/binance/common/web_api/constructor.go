@@ -62,23 +62,19 @@ func (wa *WebApiWrapper) Call(js *simplejson.Json) (result *simplejson.Json, err
 		return nil, err
 	}
 	if wa.timeout != nil {
-		if err := writer.SetWriteDeadline(time.Now().Add(*wa.timeout)); err != nil {
-			return nil, err
-		}
+		wa.connection.SetWriteTimeout(*wa.timeout)
 	}
 	if err := writer.WriteMessage(websocket.TextMessage, rq); err != nil {
 		return nil, err
 	}
 
 	reader := wa.connection.GetReader()
+	if wa.timeout != nil {
+		wa.connection.SetReadTimeout(*wa.timeout)
+	}
 	_, resp, err := reader.ReadMessage()
 	if err != nil {
 		return nil, err
-	}
-	if wa.timeout != nil {
-		if err := reader.SetReadDeadline(time.Now().Add(*wa.timeout)); err != nil {
-			return nil, err
-		}
 	}
 	result, err = simplejson.NewJson(resp)
 	return

@@ -320,3 +320,15 @@ func (sw *StreamWrapper) SetMessageLogger(logger func(message web_socket.LogReco
 	}
 	return sw
 }
+
+func (sw *StreamWrapper) SetPingHandler(handler func(string) error) {
+	if sw.socket != nil {
+		sw.socket.SetPingHandler(handler)
+	}
+}
+
+func (sw *StreamWrapper) SetPongHandler(handler func(string) error) {
+	if sw.socket != nil {
+		sw.socket.SetPongHandler(handler)
+	}
+}
