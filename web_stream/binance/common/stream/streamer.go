@@ -76,6 +76,7 @@ func (sw *StreamWrapper) Reconnect(maxAttempts int, delay time.Duration) error {
 	for i := 0; i < maxAttempts; i++ {
 		if sw.socket != nil {
 			sw.socket.Close()
+			<-sw.socket.Done()
 		}
 		socket, err := sw.factory()
 		if err == nil {
@@ -107,7 +108,7 @@ func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	resultC := make(chan *simplejson.Json, 1)
 	errC := make(chan error, 1)
 
-	subID, err := sw.socket.Subscribe(func(evt web_socket.MessageEvent) {
+	subID := sw.socket.Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			errC <- evt.Error
 			return
@@ -121,9 +122,6 @@ func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 			resultC <- resp
 		}
 	})
-	if err != nil {
-		return nil, fmt.Errorf("subscribe error: %w", err)
-	}
 	defer sw.socket.Unsubscribe(subID)
 
 	jsonBytes, err := rq.MarshalJSON()
@@ -170,8 +168,8 @@ func (sw *StreamWrapper) Subscribe(f func(web_socket.MessageEvent), subs ...stri
 	}
 
 	for _, sub := range newSubs {
-		id, err := sw.socket.Subscribe(f)
-		if err != nil {
+		id := sw.socket.Subscribe(f)
+		if id == 0 {
 			continue
 		}
 		sw.handlers[sub] = id
@@ -274,30 +272,26 @@ func (sw *StreamWrapper) EnableAutoReconnect() StreamInterface {
 			case <-sw.reconnectStopChan:
 				return
 			default:
-				// Перевірка на nil з'єднання
-				if sw.socket == nil {
-					goto tryReconnect
-				}
+				sw.mu.Lock()
+				socket := sw.socket
+				sw.mu.Unlock()
 
-				// Неблокуюча перевірка на закриття WebSocket
-				select {
-				case <-sw.socket.Done():
-					goto tryReconnect
-				default:
-					// з'єднання активне, чекаємо і продовжуємо
-					time.Sleep(sw.reconnectInterval)
+				// Чекаємо, поки поточне з'єднання закриється
+				if socket != nil && !socket.WaitStopped() {
 					continue
 				}
 
-			tryReconnect:
 				if attempts >= sw.maxReconnectAttempts {
 					return
 				}
+
+				// 🔁 Просто викликаємо існуючий Reconnect()
 				if err := sw.Reconnect(1, sw.reconnectInterval); err == nil {
 					attempts = 0
 				} else {
 					attempts++
 				}
+
 				time.Sleep(sw.reconnectInterval)
 			}
 		}

@@ -35,11 +35,7 @@ func newStreamWrapper() *streamer.StreamWrapper {
 	endpoint := "/ws"
 	factory := func() (web_socket.WebSocketInterface, error) {
 		url := fmt.Sprintf("%s://%s%s", scheme, host, endpoint)
-		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
-		if err != nil {
-			return nil, err
-		}
-		return web_socket.NewWebSocketWrapper(conn), nil
+		return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
 	}
 
 	sw := streamer.NewStreamWrapper(factory, common.WsScheme(scheme), common.WsHost(host), common.WsEndpoint(endpoint))
