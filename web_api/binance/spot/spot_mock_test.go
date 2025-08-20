@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	spot_web_api "github.com/fr0ster/turbo-cambitor/web_api/binance/spot"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )

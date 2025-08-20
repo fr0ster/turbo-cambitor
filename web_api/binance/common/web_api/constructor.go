@@ -7,7 +7,7 @@ import (
 	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-cambitor/common"
 	web_socket "github.com/fr0ster/turbo-restler/web_socket"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 
 	"github.com/gorilla/websocket"
 )
@@ -25,7 +25,7 @@ func New(
 	endpoint common.WsEndpoint,
 	scheme common.WsScheme,
 	sign signature.Sign) *WebApiWrapper {
-	factory := func() (web_socket.WebSocketInterface, error) {
+	factory := func() (web_socket.WebSocketClientInterface, error) {
 		url := string(scheme) + "://" + string(host) + string(endpoint)
 		return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
 	}

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	futures "github.com/fr0ster/turbo-cambitor/rest_api/binance/futures"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 	"github.com/stretchr/testify/assert"
 )
 

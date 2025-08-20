@@ -2,7 +2,7 @@ package futures_rest_api
 
 import (
 	common_rest_api "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/rest_api"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 )
 
 func New(sign signature.Sign, useTestNet ...bool) (api *RestApiWrapper) {

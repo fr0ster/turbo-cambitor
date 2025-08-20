@@ -6,7 +6,7 @@ import (
 
 	"github.com/bitly/go-simplejson"
 	"github.com/fr0ster/turbo-restler/rest_api"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 )
 
 func (ra *RestApiWrapper) Call(req *http.Request) (response *simplejson.Json, err error) {

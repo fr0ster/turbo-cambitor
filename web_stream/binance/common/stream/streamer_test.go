@@ -33,7 +33,7 @@ func newStreamWrapper() *streamer.StreamWrapper {
 	scheme := "ws"
 	host := "localhost:8080"
 	endpoint := "/ws"
-	factory := func() (web_socket.WebSocketInterface, error) {
+	factory := func() (web_socket.WebSocketClientInterface, error) {
 		url := fmt.Sprintf("%s://%s%s", scheme, host, endpoint)
 		return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
 	}

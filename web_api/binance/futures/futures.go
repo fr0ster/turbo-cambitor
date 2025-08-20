@@ -6,7 +6,7 @@ import (
 	request "github.com/fr0ster/turbo-cambitor/web_api/binance/common/request"
 	web_api "github.com/fr0ster/turbo-cambitor/web_api/binance/common/web_api"
 
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 )
 
 type WebApi interface {
