@@ -6,7 +6,7 @@ import (
 
 	common "github.com/fr0ster/turbo-cambitor/common"
 	web_socket "github.com/fr0ster/turbo-restler/web_socket"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 )
 
 const (
@@ -27,7 +27,8 @@ type (
 		waScheme   common.WsScheme
 		mutex      *sync.Mutex
 		sign       signature.Sign
-		connection web_socket.WebSocketInterface
+		connection web_socket.WebSocketCommonInterface
 		timeout    *time.Duration
+		factory    func() (web_socket.WebSocketCommonInterface, error)
 	}
 )

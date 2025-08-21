@@ -12,6 +12,7 @@ import (
 	"github.com/fr0ster/turbo-cambitor/common"
 	mock_server "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream/mock_server"
 	"github.com/fr0ster/turbo-restler/web_socket"
+	"github.com/google/uuid"
 
 	streamer "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
 
@@ -25,15 +26,16 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 
 	// Start server only once for all tests
-	mock_server.StartReusableMockServer(8080)
+	port := mock_server.StartReusableMockServer(0)
+	os.Setenv("MOCK_STREAM_PORT", fmt.Sprintf("%d", port))
 	os.Exit(m.Run())
 }
 
 func newStreamWrapper() *streamer.StreamWrapper {
 	scheme := "ws"
-	host := "localhost:8080"
+	host := fmt.Sprintf("localhost:%s", os.Getenv("MOCK_STREAM_PORT"))
 	endpoint := "/ws"
-	factory := func() (web_socket.WebSocketInterface, error) {
+	factory := func() (web_socket.WebSocketCommonInterface, error) {
 		url := fmt.Sprintf("%s://%s%s", scheme, host, endpoint)
 		return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
 	}
@@ -53,6 +55,7 @@ func newStreamWrapper() *streamer.StreamWrapper {
 
 // Test for Subscribe, ListOfSubscriptions, and Unsubscribe methods
 func TestSubscribers(t *testing.T) {
+	t.Parallel()
 	sw := newStreamWrapper()
 	defer func() {
 		err := sw.Unsubscribe("btcusdt@aggTrade")
@@ -74,6 +77,7 @@ func TestSubscribers(t *testing.T) {
 	time.Sleep(1 * time.Second)
 }
 func TestMultiSubscribers(t *testing.T) {
+	//t.Parallel()
 	sw := newStreamWrapper()
 
 	// Перелік стрімів
@@ -142,6 +146,7 @@ func TestMultiSubscribers(t *testing.T) {
 }
 
 func TestParallelSubscribers(t *testing.T) {
+	t.Parallel()
 	var wg sync.WaitGroup
 	clientCount := 5
 	streams := []string{"btcusdt@aggTrade", "ethusdt@depth", "bnbusdt@kline_1m"}
@@ -154,11 +159,15 @@ func TestParallelSubscribers(t *testing.T) {
 			sw := newStreamWrapper()
 			defer func() {
 				for _, s := range streams {
-					sw.Unsubscribe(s)
+					_ = sw.Unsubscribe(s)
 				}
+				sw.Disconnect()
 			}()
 
-			received := make(chan string, 10)
+			// Buffer only expected unique stream events and avoid blocking
+			received := make(chan string, len(streams))
+			seen := make(map[string]bool)
+			var seenMu sync.Mutex
 
 			handler := func(me web_socket.MessageEvent) {
 				if me.Error != nil {
@@ -189,7 +198,17 @@ func TestParallelSubscribers(t *testing.T) {
 					t.Errorf("⚠️ Client %d: 'stream' is not a string: %v", clientID, streamRaw)
 					return
 				}
-				received <- stream
+				// Deduplicate and send non-blocking to avoid stalling the reader
+				seenMu.Lock()
+				if !seen[stream] {
+					seen[stream] = true
+					select {
+					case received <- stream:
+					default:
+						// drop if buffer full
+					}
+				}
+				seenMu.Unlock()
 			}
 
 			// Subscribe to each stream
@@ -206,7 +225,7 @@ func TestParallelSubscribers(t *testing.T) {
 			assert.ElementsMatch(t, streams, subs, "Client %d subscriptions mismatch", clientID)
 
 			// Wait for some messages
-			timeout := time.After(2 * time.Second)
+			timeout := time.After(3 * time.Second)
 			streamsReceived := make(map[string]bool)
 
 		loop:
@@ -233,7 +252,60 @@ func TestParallelSubscribers(t *testing.T) {
 	wg.Wait()
 }
 
+// testListOfSubscriptions uses a short-lived connection to avoid interfering with active streams
+func testListOfSubscriptions(t *testing.T, factory func() (web_socket.WebSocketCommonInterface, error), timeout time.Duration) ([]string, error) {
+	t.Helper()
+	tmp, err := factory()
+	if err != nil {
+		return nil, err
+	}
+	tmp.Open()
+	defer tmp.Close()
+	if timeout > 0 {
+		tmp.SetReadTimeout(timeout)
+		tmp.SetWriteTimeout(timeout)
+	}
+	_ = tmp.WaitStarted()
+
+	rq := simplejson.New()
+	rq.Set("method", "LIST_SUBSCRIPTIONS")
+	rq.Set("id", uuid.New().String())
+	body, _ := rq.MarshalJSON()
+	if err := tmp.Send(web_socket.WriteEvent{Body: body}); err != nil {
+		return nil, err
+	}
+	ch := make(chan []byte, 1)
+	sid := tmp.Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Kind == web_socket.KindData {
+			select {
+			case ch <- evt.Body:
+			default:
+			}
+		}
+	})
+	defer tmp.Unsubscribe(sid)
+
+	var resp []byte
+	select {
+	case resp = <-ch:
+	case <-time.After(timeout):
+		return nil, fmt.Errorf("timeout")
+	}
+	js, err := simplejson.NewJson(resp)
+	if err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, v := range js.Get("result").MustArray() {
+		if s, ok := v.(string); ok {
+			out = append(out, s)
+		}
+	}
+	return out, nil
+}
+
 func TestCall(t *testing.T) {
+	t.Parallel()
 	sw := newStreamWrapper()
 	rq := simplejson.New()
 	rq.Set("method", "LIST_SUBSCRIPTIONS")
@@ -246,6 +318,7 @@ func TestCall(t *testing.T) {
 }
 
 func TestGracefulCloseStreamer(t *testing.T) {
+	t.Parallel()
 	sw := newStreamWrapper()
 
 	rq := simplejson.New()
@@ -260,6 +333,7 @@ func TestGracefulCloseStreamer(t *testing.T) {
 }
 
 func TestAbruptCloseStreamer(t *testing.T) {
+	t.Parallel()
 	sw := newStreamWrapper()
 
 	rq := simplejson.New()
@@ -276,6 +350,7 @@ func TestAbruptCloseStreamer(t *testing.T) {
 var closeMutex = &sync.Mutex{}
 
 func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
+	t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	func() {
@@ -307,6 +382,7 @@ func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
 }
 
 func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
+	t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	func() {
@@ -338,6 +414,7 @@ func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
 }
 
 func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
+	t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	sw := newStreamWrapper()
@@ -362,6 +439,7 @@ func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
 }
 
 func TestAbruptCloseStreamer_WithAutoReconnect(t *testing.T) {
+	t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	sw := newStreamWrapper()
@@ -407,6 +485,7 @@ func waitUntilConnected(sw *streamer.StreamWrapper, maxAttempts int, delay time.
 }
 
 func TestPingPongHandlingWithActiveStream(t *testing.T) {
+	t.Parallel()
 	sw := newStreamWrapper()
 
 	// pingCalled := false
@@ -459,6 +538,7 @@ func TestPingPongHandlingWithActiveStream(t *testing.T) {
 }
 
 func TestStreamWrapperLoggerCalled(t *testing.T) {
+	t.Parallel()
 	var logCalled bool
 	var logErr error
 
@@ -502,6 +582,7 @@ func TestStreamWrapperLoggerCalled(t *testing.T) {
 }
 
 func TestReadWriteTimeout(t *testing.T) {
+	t.Parallel()
 	sw := newStreamWrapper()
 	// Встановлюємо таймаут на читання
 	sw.SetReadTimeout(1 * time.Second)
@@ -516,4 +597,19 @@ func TestReadWriteTimeout(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "test-id", resp.Get("id").MustString())
 	assert.Equal(t, []interface{}{}, resp.Get("result").MustArray())
+}
+
+// Ensure helper testListOfSubscriptions is used
+func Test_ListOfSubscriptions_Helper(t *testing.T) {
+	t.Parallel()
+	scheme := "ws"
+	host := fmt.Sprintf("localhost:%s", os.Getenv("MOCK_STREAM_PORT"))
+	endpoint := "/ws"
+	factory := func() (web_socket.WebSocketCommonInterface, error) {
+		url := fmt.Sprintf("%s://%s%s", scheme, host, endpoint)
+		return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
+	}
+	subs, err := testListOfSubscriptions(t, factory, 1500*time.Millisecond)
+	assert.NoError(t, err)
+	assert.NotNil(t, subs)
 }

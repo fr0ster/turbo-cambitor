@@ -2,6 +2,7 @@ package mock_server
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -14,41 +15,59 @@ import (
 var (
 	mockServerMu sync.Mutex
 	currentSrv   *http.Server
+	currentPort  int
 )
 
-// StartReusableMockServer запускає WebSocket mock сервер на заданому порту
-func StartReusableMockServer(port int) {
+// StartReusableMockServer запускає WebSocket mock сервер на заданому порту.
+// Якщо port == 0, буде обрано вільний еферемний порт. Повертає фактичний порт.
+func StartReusableMockServer(port int) int {
 	mockServerMu.Lock()
 	defer mockServerMu.Unlock()
 
 	if currentSrv != nil {
-		logrus.Infof("☑️ Mock server on port %d is already running", port)
-		return
+		if currentPort > 0 {
+			logrus.Infof("☑️ Mock server on port %d is already running", currentPort)
+			return currentPort
+		}
 	}
 
 	addr := fmt.Sprintf(":%d", port)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		handleWebSocketConnection(w, r, port)
+		handleWebSocketConnection(w, r, currentPort)
 	})
 
-	currentSrv = &http.Server{Addr: addr, Handler: mux}
+	// Створюємо listener, щоб отримати фактичний порт (коли port == 0)
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		logrus.Errorf("Failed to start mock server listener on %s: %v", addr, err)
+		return 0
+	}
+	actualPort := ln.Addr().(*net.TCPAddr).Port
+	currentPort = actualPort
+	currentSrv = &http.Server{Handler: mux}
 
-	go func() {
-		logrus.Infof("🚀 Starting mock server on %s", addr)
-		err := currentSrv.ListenAndServe()
+	go func(p int) {
+		logrus.Infof("🚀 Starting mock server on :%d", p)
+		err := currentSrv.Serve(ln)
 		if err != nil && err != http.ErrServerClosed {
 			logrus.Errorf("Server error: %v", err)
 		}
 		mockServerMu.Lock()
 		currentSrv = nil
+		currentPort = 0
 		mockServerMu.Unlock()
-	}()
+	}(actualPort)
+
+	return actualPort
 }
 
 func handleWebSocketConnection(w http.ResponseWriter, r *http.Request, port int) {
-	upgrader := websocket.Upgrader{}
+	upgrader := websocket.Upgrader{
+		// Allow all origins for tests to avoid cross-origin issues
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logrus.Errorf("Upgrade error: %v", err)
@@ -336,7 +355,11 @@ func handleClose(conn *websocket.Conn, stopChan chan struct{}, restartAfter, por
 			mockServerMu.Unlock()
 
 			time.Sleep(200 * time.Millisecond)
-			StartReusableMockServer(port)
+			p := port
+			if p == 0 {
+				p = currentPort
+			}
+			StartReusableMockServer(p)
 		}()
 	}
 }

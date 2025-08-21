@@ -8,6 +8,9 @@ import (
 )
 
 func TestListenKey(t *testing.T) {
+	if !assert.True(t, requireSpotAPIKeys(t), "SPOT_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	listenKey, err := ra.ListenKey()
 	assert.Nil(t, err)
@@ -15,6 +18,9 @@ func TestListenKey(t *testing.T) {
 }
 
 func TestKeepAliveListenKey(t *testing.T) {
+	if !assert.True(t, requireSpotAPIKeys(t), "SPOT_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	listenKey, err := ra.ListenKey()
 	assert.Nil(t, err)

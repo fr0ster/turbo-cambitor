@@ -13,8 +13,8 @@ import (
 )
 
 type StreamWrapper struct {
-	socket     web_socket.WebSocketInterface
-	factory    func() (web_socket.WebSocketInterface, error)
+	socket     web_socket.WebSocketCommonInterface
+	factory    func() (web_socket.WebSocketCommonInterface, error)
 	wsScheme   common.WsScheme
 	wsHost     common.WsHost
 	wsEndpoint common.WsEndpoint
@@ -34,7 +34,7 @@ type StreamWrapper struct {
 
 // NewStreamWrapper creates a new StreamWrapper with a socket factory
 func NewStreamWrapper(
-	factory func() (web_socket.WebSocketInterface, error),
+	factory func() (web_socket.WebSocketCommonInterface, error),
 	wsScheme common.WsScheme,
 	wsHost common.WsHost,
 	wsEndpoint common.WsEndpoint,
@@ -76,7 +76,7 @@ func (sw *StreamWrapper) Reconnect(maxAttempts int, delay time.Duration) error {
 	for i := 0; i < maxAttempts; i++ {
 		if sw.socket != nil {
 			sw.socket.Close()
-			<-sw.socket.Done()
+			<-sw.socket.Stopped()
 		}
 		socket, err := sw.factory()
 		if err == nil {
@@ -216,7 +216,6 @@ func (sw *StreamWrapper) ListOfSubscriptions() ([]string, error) {
 	rq := simplejson.New()
 	rq.Set("method", "LIST_SUBSCRIPTIONS")
 	rq.Set("id", uuid.New().String())
-
 	resp, err := sw.Call(rq)
 	if err != nil {
 		return nil, err
@@ -231,7 +230,7 @@ func (sw *StreamWrapper) ListOfSubscriptions() ([]string, error) {
 	return result, nil
 }
 
-func (sw *StreamWrapper) GetConnection() web_socket.WebSocketInterface {
+func (sw *StreamWrapper) GetConnection() web_socket.WebSocketCommonInterface {
 	return sw.socket
 }
 

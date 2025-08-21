@@ -1,12 +1,10 @@
 module github.com/fr0ster/turbo-cambitor
 
-go 1.23.0
-
-toolchain go1.24.2
+go 1.24.3
 
 require (
 	github.com/bitly/go-simplejson v0.5.1
-	github.com/fr0ster/turbo-restler v0.14.24
+	github.com/fr0ster/turbo-restler v0.14.26
 	github.com/google/uuid v1.6.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
@@ -14,9 +12,13 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fr0ster/turbo-signer v0.1.8
+	github.com/fr0ster/turbo-signer/v2 v2.0.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/fr0ster/turbo-restler => ../turbo-restler
+
+replace github.com/fr0ster/turbo-signer/v2 => ../turbo-signer

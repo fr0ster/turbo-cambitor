@@ -1,13 +1,16 @@
 package spot_web_stream_test
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/bitly/go-simplejson"
+	spot_rest "github.com/fr0ster/turbo-cambitor/rest_api/binance/spot"
 	common "github.com/fr0ster/turbo-cambitor/web_stream/binance/common"
 	web_stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/spot"
 	"github.com/fr0ster/turbo-restler/web_socket"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -32,9 +35,27 @@ func mockErrHandler(err error) error {
 	return err
 }
 
+// API keys for endpoints that require auth (UserData listenKey)
+var (
+	apiKey = os.Getenv("SPOT_TEST_BINANCE_API_KEY")
+	secret = os.Getenv("SPOT_TEST_BINANCE_SECRET_KEY")
+	sign   = signature.NewSignHMAC(signature.PublicKey(apiKey), signature.SecretKey(secret))
+)
+
+func requireSpotAPIKeys(t *testing.T) bool {
+	t.Helper()
+	return apiKey != "" && secret != ""
+}
+
 func TestKlines(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.Klines("1m").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -42,8 +63,14 @@ func TestKlines(t *testing.T) {
 }
 
 func TestContinuousKlines(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.ContinuousKlines("1m", "BTCUSDT").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -51,8 +78,14 @@ func TestContinuousKlines(t *testing.T) {
 }
 
 func TestPartialBookDepths(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.PartialBookDepths(common.DepthStreamLevel5, common.DepthStreamRate100ms).SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -60,8 +93,14 @@ func TestPartialBookDepths(t *testing.T) {
 }
 
 func TestDiffBookDepths(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.DiffBookDepths(common.DepthStreamRate100ms).SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -69,8 +108,14 @@ func TestDiffBookDepths(t *testing.T) {
 }
 
 func TestAggTrades(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.AggTrades().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -78,8 +123,14 @@ func TestAggTrades(t *testing.T) {
 }
 
 func TestTrades(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.Trades().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -87,8 +138,14 @@ func TestTrades(t *testing.T) {
 }
 
 func TestBookTickers(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.BookTickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -96,8 +153,14 @@ func TestBookTickers(t *testing.T) {
 }
 
 func TestTickers(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.Tickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -105,8 +168,14 @@ func TestTickers(t *testing.T) {
 }
 
 func TestMiniTickers(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.MiniTickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -114,17 +183,40 @@ func TestMiniTickers(t *testing.T) {
 }
 
 func TestUserData(t *testing.T) {
-	stream := web_stream.NewDefault(true)
-	wrapper, err := stream.UserData("listenKey").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	t.Parallel()
+	if !assert.True(t, requireSpotAPIKeys(t), "SPOT_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
+	ra := spot_rest.New(sign, true)
+	listenKey, err := ra.ListenKey()
 	assert.NoError(t, err)
-	defer wrapper.Disconnect()
+	assert.NotEmpty(t, listenKey)
+
+	stream := web_stream.NewDefault(true)
+	wrapper, err := stream.UserData(listenKey).SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
+	defer func() {
+		wrapper.Disconnect()
+		_ = ra.CloseListenKey(listenKey)
+	}()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
 }
 
 func TestMarkPrice(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.MarkPrice().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -132,8 +224,14 @@ func TestMarkPrice(t *testing.T) {
 }
 
 func TestLiquidationOrder(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.LiquidationOrder().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -141,8 +239,14 @@ func TestLiquidationOrder(t *testing.T) {
 }
 
 func TestContractInfo(t *testing.T) {
+	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.ContractInfo().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
+		if evt.Error != nil {
+			_ = mockErrHandler(evt.Error)
+		}
+	})
 	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
@@ -150,6 +254,7 @@ func TestContractInfo(t *testing.T) {
 }
 
 func TestStream(t *testing.T) {
+	t.Parallel()
 	stream, err := web_stream.
 		NewDefault(true).
 		Stream().Connect()

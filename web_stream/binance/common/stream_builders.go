@@ -35,7 +35,7 @@ type StreamBuilder struct {
 }
 
 func (wa *StreamBuilder) makeStream() stream.StreamInterface {
-	factory := func() (web_socket.WebSocketInterface, error) {
+	factory := func() (web_socket.WebSocketCommonInterface, error) {
 		url := string(wa.wsScheme) + "://" + string(wa.wsHost)
 		if wa.EndpointPrefix != "" {
 			url = url + "/" + string(wa.EndpointPrefix)

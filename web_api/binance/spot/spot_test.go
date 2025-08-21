@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	web_api "github.com/fr0ster/turbo-cambitor/web_api/binance/spot"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,8 +15,17 @@ var (
 	sign   = signature.NewSignHMAC(signature.PublicKey(apiKey), signature.SecretKey(secret))
 )
 
+func requireSpotAPIKeys(t *testing.T) bool {
+	t.Helper()
+	return apiKey != "" && secret != ""
+}
+
 // Test 3: Account Information
 func TestAccountInformation(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireSpotAPIKeys(t), "SPOT_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.AccountInformation().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
@@ -25,6 +34,7 @@ func TestAccountInformation(t *testing.T) {
 
 // Test 7: Exchange Info
 func TestExchangeInfo(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.ExchangeInfo().Set("symbols", []string{"BTCUSDT"}).Do())
 	assert.Nil(t, err)
@@ -40,6 +50,10 @@ func TestExchangeInfo(t *testing.T) {
 
 // Test 10: Logout
 func TestLogout(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireSpotAPIKeys(t), "SPOT_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.Logout().Do())
 	assert.Nil(t, err)
@@ -48,6 +62,7 @@ func TestLogout(t *testing.T) {
 
 // Test 11: Order Book
 func TestOrderBook(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.OrderBook().Set("symbol", "BTCUSDT").Do())
 	assert.Nil(t, err)
@@ -56,6 +71,7 @@ func TestOrderBook(t *testing.T) {
 
 // Test 12: Ping
 func TestPing(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.Ping().Do())
 	assert.Nil(t, err)
@@ -64,6 +80,10 @@ func TestPing(t *testing.T) {
 
 // Test 13: Place, Query And Cancel Order
 func TestPlaceAndQueryAndCancelOrder(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireSpotAPIKeys(t), "SPOT_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.PlaceOrder().
 		SetAPIKey().
@@ -100,6 +120,10 @@ func TestPlaceAndQueryAndCancelOrder(t *testing.T) {
 
 // Test 6: Place, Query And CancelReplace Order
 func TestPlaceAndQueryAndCancelReplaceOrder(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireSpotAPIKeys(t), "SPOT_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.PlaceOrder().
 		SetAPIKey().
@@ -142,6 +166,10 @@ func TestPlaceAndQueryAndCancelReplaceOrder(t *testing.T) {
 
 // Test 15: Query Open Orders
 func TestQueryOpenOrders(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireSpotAPIKeys(t), "SPOT_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.QueryOpenOrders().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
@@ -150,6 +178,10 @@ func TestQueryOpenOrders(t *testing.T) {
 
 // Test 19: Status
 func TestStatus(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireSpotAPIKeys(t), "SPOT_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.Status().Do())
 	assert.Nil(t, err)
@@ -158,6 +190,7 @@ func TestStatus(t *testing.T) {
 
 // Test 20: Symbol Book Ticker
 func TestSymbolBookTicker(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.SymbolBookTicker().Set("symbols", []string{"BTCUSDT"}).Do())
 	assert.Nil(t, err)
@@ -166,6 +199,7 @@ func TestSymbolBookTicker(t *testing.T) {
 
 // Test 21: Symbol Price Ticker
 func TestSymbolPriceTicker(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	result, err := wa.Call(wa.SymbolPriceTicker().Set("symbols", []string{"BTCUSDT"}).Do())
 	assert.Nil(t, err)
@@ -174,6 +208,7 @@ func TestSymbolPriceTicker(t *testing.T) {
 
 // Test 22: Time
 func TestTime(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	assert.NotNil(t, wa.Time())
 	result, err := wa.Call(wa.Time().Do())

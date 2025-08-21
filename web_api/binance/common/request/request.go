@@ -6,7 +6,7 @@ import (
 	"github.com/bitly/go-simplejson"
 
 	common "github.com/fr0ster/turbo-cambitor/common"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 	"github.com/google/uuid"
 )
 

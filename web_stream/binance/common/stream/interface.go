@@ -26,8 +26,8 @@ type StreamInterface interface {
 	// ListOfSubscriptions returns the current business-level subscriptions
 	ListOfSubscriptions() ([]string, error)
 
-	// GetConnection returns the underlying WebSocketInterface, if it needs to be passed further
-	GetConnection() web_socket.WebSocketInterface
+	// GetConnection returns the underlying WebSocket connection, if it needs to be passed further
+	GetConnection() web_socket.WebSocketCommonInterface
 
 	// SetMaxReconnectAttempts sets the maximum number of reconnect attempts
 	SetMaxReconnectAttempts(n int) StreamInterface

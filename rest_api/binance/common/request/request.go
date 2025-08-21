@@ -8,7 +8,7 @@ import (
 
 	common_rest_api "github.com/fr0ster/turbo-cambitor/rest_api/binance/common/rest_api"
 	rest_api "github.com/fr0ster/turbo-restler/rest_api"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 )
 
 type (

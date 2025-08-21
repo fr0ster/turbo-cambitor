@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	web_api "github.com/fr0ster/turbo-cambitor/web_api/binance/futures"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,8 +16,17 @@ var (
 	sign   = signature.NewSignHMAC(signature.PublicKey(apiKey), signature.SecretKey(secret))
 )
 
+func requireFuturesAPIKeys(t *testing.T) bool {
+	t.Helper()
+	return apiKey != "" && secret != ""
+}
+
 // Test 1: Account Balance
 func TestAccountBalance(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.AccountBalance().SetAPIKey().SetTimestamp().SetSignature().Do())
 	if err != nil && strings.Contains(err.Error(), "timeout") {
@@ -29,8 +38,9 @@ func TestAccountBalance(t *testing.T) {
 
 // Test 3: Account Information
 func TestAccountInformation(t *testing.T) {
-	if apiKey == "" || secret == "" {
-		t.Skip("Skipping test because API key or secret is not set")
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
 	}
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.AccountInformation().SetAPIKey().SetTimestamp().SetSignature().Do())
@@ -43,8 +53,9 @@ func TestAccountInformation(t *testing.T) {
 
 // Test 5: Account Positions
 func TestAccountPositions(t *testing.T) {
-	if apiKey == "" || secret == "" {
-		t.Skip("Skipping test because API key or secret is not set")
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
 	}
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.AccountPositions().SetAPIKey().SetTimestamp().SetSignature().Do())
@@ -57,6 +68,7 @@ func TestAccountPositions(t *testing.T) {
 
 // Test 11: Order Book
 func TestOrderBook(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.OrderBook().SetAPIKey().Set("symbol", "BTCUSDT").Do())
 	assert.Nil(t, err)
@@ -65,6 +77,7 @@ func TestOrderBook(t *testing.T) {
 
 // Test 12: Ping
 func TestPing(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.Ping().Do())
 	assert.Nil(t, err)
@@ -73,6 +86,10 @@ func TestPing(t *testing.T) {
 
 // Test 13: Place, Query And Cancel Order
 func TestPlaceAndQueryAndCancelOrder(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.PlaceOrder().
 		SetAPIKey().
@@ -111,6 +128,7 @@ func TestPlaceAndQueryAndCancelOrder(t *testing.T) {
 
 // Test 6: Place, Query And Modify Order
 func TestPlaceAndQueryAndModifyOrder(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.PlaceOrder().
 		SetAPIKey().
@@ -139,6 +157,7 @@ func TestPlaceAndQueryAndModifyOrder(t *testing.T) {
 
 // Test 17: Query Position
 func TestQueryPosition(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.QueryPosition().Set("symbol", "BTCUSDT").SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
@@ -147,6 +166,7 @@ func TestQueryPosition(t *testing.T) {
 
 // Test 18: Query Position V2
 func TestQueryPositionV2(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.QueryPositionV2().SetAPIKey().SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
@@ -155,6 +175,7 @@ func TestQueryPositionV2(t *testing.T) {
 
 // Test 19: Status
 func TestStatus(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.Status().SetAPIKey().Do())
 	assert.Nil(t, err)
@@ -163,6 +184,7 @@ func TestStatus(t *testing.T) {
 
 // Test 20: Symbol Book Ticker
 func TestSymbolBookTicker(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.SymbolBookTicker().SetAPIKey().Set("symbol", "BTCUSDT").SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
@@ -171,6 +193,7 @@ func TestSymbolBookTicker(t *testing.T) {
 
 // Test 21: Symbol Price Ticker
 func TestSymbolPriceTicker(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.SymbolPriceTicker().SetAPIKey().Set("symbol", "BTCUSDT").SetTimestamp().SetSignature().Do())
 	assert.Nil(t, err)
@@ -179,6 +202,7 @@ func TestSymbolPriceTicker(t *testing.T) {
 
 // Test 22: Time
 func TestTime(t *testing.T) {
+	t.Parallel()
 	wa := web_api.NewDefault(sign, true)
 	response, err := wa.Call(wa.Time().Do())
 	assert.Nil(t, err)

@@ -8,6 +8,7 @@ import (
 )
 
 func TestListenKey(t *testing.T) {
+	requireFuturesAPIKeys(t)
 	ra := futures.New(sign, true)
 	listenKey, err := ra.ListenKey()
 	assert.Nil(t, err)
@@ -15,6 +16,7 @@ func TestListenKey(t *testing.T) {
 }
 
 func TestKeepAliveListenKey(t *testing.T) {
+	requireFuturesAPIKeys(t)
 	ra := futures.New(sign, true)
 	listenKey, err := ra.KeepAliveListenKey()
 	assert.Nil(t, err)

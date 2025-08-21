@@ -7,7 +7,7 @@ import (
 	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-cambitor/common"
 	web_socket "github.com/fr0ster/turbo-restler/web_socket"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 
 	"github.com/gorilla/websocket"
 )
@@ -25,13 +25,9 @@ func New(
 	endpoint common.WsEndpoint,
 	scheme common.WsScheme,
 	sign signature.Sign) *WebApiWrapper {
-	factory := func() (web_socket.WebSocketInterface, error) {
-		url := string(scheme) + "://" + string(host) + string(endpoint)
-		return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
-	}
-	wa, err := factory()
-	if err != nil {
-		return nil
+	factory := func() (web_socket.WebSocketCommonInterface, error) {
+	url := string(scheme) + "://" + string(host) + string(endpoint)
+	return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
 	}
 	return &WebApiWrapper{
 		waScheme:   scheme,
@@ -39,7 +35,7 @@ func New(
 		waEndpoint: endpoint,
 		mutex:      &sync.Mutex{},
 		sign:       sign,
-		connection: wa,
+		factory:    factory,
 	}
 }
 
@@ -51,6 +47,15 @@ func (wa *WebApiWrapper) SetTimeOut(timeout time.Duration) *WebApiWrapper {
 func (wa *WebApiWrapper) Call(js *simplejson.Json) (result *simplejson.Json, err error) {
 	wa.mutex.Lock()
 	defer wa.mutex.Unlock()
+
+	// lazy init connection
+	if wa.connection == nil {
+		conn, err := wa.factory()
+		if err != nil {
+			return nil, err
+		}
+		wa.connection = conn
+	}
 
 	writer := wa.connection.GetWriter()
 	rq, err := js.MarshalJSON()

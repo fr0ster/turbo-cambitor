@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	futures "github.com/fr0ster/turbo-cambitor/rest_api/binance/futures"
-	signature "github.com/fr0ster/turbo-signer/signature"
+	signature "github.com/fr0ster/turbo-signer/v2/signature"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +15,16 @@ var (
 	sign   = signature.NewSignHMAC(signature.PublicKey(apiKey), signature.SecretKey(secret))
 )
 
+func requireFuturesAPIKeys(t *testing.T) bool {
+	t.Helper()
+	return apiKey != "" && secret != ""
+}
+
 func TestCallRestAPI(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	listenkey, err := ra.ListenKey()
 	assert.NoError(t, err)
@@ -27,6 +36,10 @@ func TestCallRestAPI(t *testing.T) {
 }
 
 func TestAccount(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.Account().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -37,6 +50,10 @@ func TestAccount(t *testing.T) {
 }
 
 func TestBalance(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.Balance().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -47,6 +64,10 @@ func TestBalance(t *testing.T) {
 }
 
 func TestPositionRisk(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.PositionRisk().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -57,6 +78,10 @@ func TestPositionRisk(t *testing.T) {
 }
 
 func TestUserCommissionRate(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.UserCommissionRate().Set("symbol", "BTCUSDT").SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -67,6 +92,10 @@ func TestUserCommissionRate(t *testing.T) {
 }
 
 func TestAccountConfiguration(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.AccountConfiguration().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -77,6 +106,10 @@ func TestAccountConfiguration(t *testing.T) {
 }
 
 func TestSymbolConfiguration(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.SymbolConfiguration().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -87,6 +120,10 @@ func TestSymbolConfiguration(t *testing.T) {
 }
 
 func TestForceOrders(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.ForceOrders().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -97,6 +134,10 @@ func TestForceOrders(t *testing.T) {
 }
 
 func TestNotionalLeverageBrackets(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.NotionalLeverageBrackets().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -107,6 +148,10 @@ func TestNotionalLeverageBrackets(t *testing.T) {
 }
 
 func TestMultiAssetsMargin(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.MultiAssetsMargin().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -117,6 +162,10 @@ func TestMultiAssetsMargin(t *testing.T) {
 }
 
 func TestPositionMode(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.PositionMode().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -127,6 +176,10 @@ func TestPositionMode(t *testing.T) {
 }
 
 func TestIncome(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.Income().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
@@ -137,6 +190,10 @@ func TestIncome(t *testing.T) {
 }
 
 func TestBNBBurnStatus(t *testing.T) {
+	t.Parallel()
+	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
+		return
+	}
 	ra := futures.New(sign, true)
 	rq, err := ra.BNBBurnStatus().SetAPIKey().SetTimestamp().SetSignature().Do()
 	assert.NoError(t, err)
