@@ -47,11 +47,11 @@ func NewDefault(sign signature.Sign, useTestNet ...bool) WebApi {
 		useTestNet = append(useTestNet, false)
 	}
 	if useTestNet[0] {
-		waHost = "testnet.binance.vision"
+		waHost = "ws-api.testnet.binance.vision"
 		waEndpoint = "/ws-api/v3"
 		waScheme = common.WsSchemeWSS
 	} else {
-		waHost = "ws-api.binance.com:443"
+		waHost = "ws-api.binance.com"
 		waEndpoint = "/ws-api/v3"
 		waScheme = common.WsSchemeWSS
 	}
