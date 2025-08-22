@@ -43,7 +43,11 @@ func (wa *StreamBuilder) makeStream() stream.StreamInterface {
 		if wa.EndpointSuffix != "" {
 			url = url + "/" + string(wa.EndpointSuffix)
 		}
-		return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
+		ws, err := web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
+		if err != nil {
+			return nil, fmt.Errorf("websocket dial failed url=%s: %w", url, err)
+		}
+		return ws, nil
 	}
 
 	return stream.NewStreamWrapper(

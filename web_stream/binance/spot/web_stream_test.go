@@ -51,12 +51,15 @@ func TestKlines(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.Klines("1m").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -66,12 +69,15 @@ func TestContinuousKlines(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.ContinuousKlines("1m", "BTCUSDT").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -81,12 +87,15 @@ func TestPartialBookDepths(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.PartialBookDepths(common.DepthStreamLevel5, common.DepthStreamRate100ms).SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -96,12 +105,15 @@ func TestDiffBookDepths(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.DiffBookDepths(common.DepthStreamRate100ms).SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -111,12 +123,15 @@ func TestAggTrades(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.AggTrades().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -126,12 +141,15 @@ func TestTrades(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.Trades().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -141,12 +159,15 @@ func TestBookTickers(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.BookTickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -156,12 +177,15 @@ func TestTickers(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.Tickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -171,12 +195,15 @@ func TestMiniTickers(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.MiniTickers().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -212,12 +239,15 @@ func TestMarkPrice(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.MarkPrice().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -227,12 +257,15 @@ func TestLiquidationOrder(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.LiquidationOrder().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)
@@ -242,12 +275,15 @@ func TestContractInfo(t *testing.T) {
 	t.Parallel()
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.ContractInfo().SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
+	assert.NoError(t, err)
+	if err != nil || wrapper == nil {
+		return
+	}
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	assert.NoError(t, err)
 	defer wrapper.Disconnect()
 	assert.NotNil(t, wrapper)
 	time.Sleep(timeOut)

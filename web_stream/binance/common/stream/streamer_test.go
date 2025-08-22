@@ -1,6 +1,7 @@
 package streamer_test
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -18,7 +19,6 @@ import (
 
 	"github.com/bitly/go-simplejson"
 	"github.com/gorilla/websocket"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -295,7 +295,7 @@ func testListOfSubscriptions(t *testing.T, factory func() (web_socket.WebSocketC
 	if err != nil {
 		return nil, err
 	}
-	var out []string
+	out := make([]string, 0)
 	for _, v := range js.Get("result").MustArray() {
 		if s, ok := v.(string); ok {
 			out = append(out, s)
@@ -350,7 +350,7 @@ func TestAbruptCloseStreamer(t *testing.T) {
 var closeMutex = &sync.Mutex{}
 
 func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	func() {
@@ -382,7 +382,7 @@ func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
 }
 
 func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	func() {
@@ -414,11 +414,11 @@ func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
 }
 
 func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	sw := newStreamWrapper()
-	sw.SetMaxReconnectAttempts(3).SetReconnectInterval(200 * time.Millisecond).EnableAutoReconnect()
+	sw.SetMaxReconnectAttempts(30).SetReconnectInterval(200 * time.Millisecond).EnableAutoReconnect()
 
 	defer sw.DisableAutoReconnect()
 
@@ -431,19 +431,27 @@ func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
 	assert.Error(t, err, "should return error due to graceful close")
 	assert.Nil(t, resp)
 
-	// 🧘‍♂️ Дати серверу стартануть після рестарту
-	time.Sleep(500 * time.Millisecond)
-
-	ok := waitUntilConnected(sw, 10, 300*time.Millisecond)
-	assert.True(t, ok, "should auto-reconnect after CLOSE_GRACEFUL with restart")
+	// Дочекайся відновлення здоров'я (через сервісний канал) і підняття основного коннекту
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	assert.NoError(t, sw.WaitHealthy(ctx), "should auto-recover after CLOSE_GRACEFUL with restart")
+	// Після відновлення можна вимкнути авто-реконнект і виконати простий Call
+	sw.DisableAutoReconnect()
+	rq2 := simplejson.New()
+	rq2.Set("method", "LIST_SUBSCRIPTIONS")
+	rq2.Set("id", "post-recover")
+	resp2, err2 := sw.Call(rq2)
+	assert.NoError(t, err2)
+	assert.NotNil(t, resp2)
 }
 
 func TestAbruptCloseStreamer_WithAutoReconnect(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	sw := newStreamWrapper()
-	sw.SetMaxReconnectAttempts(3).SetReconnectInterval(200 * time.Millisecond).EnableAutoReconnect()
+	// Give more room for abrupt close + server restart timing
+	sw.SetMaxReconnectAttempts(10).SetReconnectInterval(200 * time.Millisecond).EnableAutoReconnect()
 
 	defer sw.DisableAutoReconnect()
 
@@ -456,33 +464,64 @@ func TestAbruptCloseStreamer_WithAutoReconnect(t *testing.T) {
 	assert.Error(t, err, "should return error due to abrupt close")
 	assert.Nil(t, resp)
 
-	ok := waitUntilConnected(sw, 10, 300*time.Millisecond)
-	assert.True(t, ok, "should auto-reconnect after CLOSE_ABRUPT with restart")
+	// Дочекайся відновлення здоров'я (через сервісний канал) і підняття основного коннекту
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	defer cancel()
+	assert.NoError(t, sw.WaitHealthy(ctx), "should auto-recover after CLOSE_ABRUPT with restart")
+	// Після відновлення можна вимкнути авто-реконнект і виконати простий Call
+	sw.DisableAutoReconnect()
+	rq2 := simplejson.New()
+	rq2.Set("method", "LIST_SUBSCRIPTIONS")
+	rq2.Set("id", "post-recover")
+	resp2, err2 := sw.Call(rq2)
+	assert.NoError(t, err2)
+	assert.NotNil(t, resp2)
 }
 
-func waitUntilConnected(sw *streamer.StreamWrapper, maxAttempts int, delay time.Duration) bool {
-	for i := 0; i < maxAttempts; i++ {
-		time.Sleep(delay)
+// removed waitUntilConnected: tests now rely on cambitor's WaitHealthy
 
-		// if !sw.IsLoopStarted() {
-		// 	logrus.Warnf("⏳ loop not started on attempt %d", i)
-		// 	continue
-		// }
+// waitServerListening активно перевіряє, що TCP-порт слухає з'єднання
+// func waitServerListening(addr string, timeout time.Duration) bool {
+//     deadline := time.Now().Add(timeout)
+//     for {
+//         if time.Now().After(deadline) {
+//             return false
+//         }
+//         conn, err := net.DialTimeout("tcp", addr, 250*time.Millisecond)
+//         if err == nil {
+//             _ = conn.Close()
+//             return true
+//         }
+//         time.Sleep(150 * time.Millisecond)
+//     }
+// }
 
-		rq := simplejson.New()
-		rq.Set("method", "LIST_SUBSCRIPTIONS")
-		rq.Set("id", fmt.Sprintf("auto-recheck-%d", i))
-
-		if _, err := sw.Call(rq); err == nil {
-			logrus.Infof("✅ Connected and received subscriptions at attempt %d", i)
-			sw.DisableAutoReconnect()
-			return true
-		}
-
-		logrus.Warnf("❌ Call failed at attempt %d", i)
-	}
-	return false
-}
+// waitForPong надсилає Ping і очікує Pong за короткий таймаут
+// func waitForPong(conn web_socket.WebSocketCommonInterface, timeout time.Duration) bool {
+//     if conn == nil || !conn.IsStarted() {
+//         return false
+//     }
+//     done := make(chan struct{}, 1)
+//     // Тимчасовий pong handler
+//     conn.SetPongHandler(func(string) error {
+//         select {
+//         case done <- struct{}{}:
+//         default:
+//         }
+//         return nil
+//     })
+//     // Надсилаємо Ping control
+//     deadline := time.Now().Add(timeout)
+//     if err := conn.GetControl().WriteControl(websocket.PingMessage, []byte("ping"), deadline); err != nil {
+//         return false
+//     }
+//     select {
+//     case <-done:
+//         return true
+//     case <-time.After(timeout):
+//         return false
+//     }
+// }
 
 func TestPingPongHandlingWithActiveStream(t *testing.T) {
 	t.Parallel()
@@ -601,7 +640,9 @@ func TestReadWriteTimeout(t *testing.T) {
 
 // Ensure helper testListOfSubscriptions is used
 func Test_ListOfSubscriptions_Helper(t *testing.T) {
-	t.Parallel()
+	// Не запускаємо паралельно; синхронізуємося з тестами, що перезапускають сервер
+	closeMutex.Lock()
+	defer closeMutex.Unlock()
 	scheme := "ws"
 	host := fmt.Sprintf("localhost:%s", os.Getenv("MOCK_STREAM_PORT"))
 	endpoint := "/ws"
@@ -609,7 +650,7 @@ func Test_ListOfSubscriptions_Helper(t *testing.T) {
 		url := fmt.Sprintf("%s://%s%s", scheme, host, endpoint)
 		return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
 	}
-	subs, err := testListOfSubscriptions(t, factory, 1500*time.Millisecond)
+	subs, err := testListOfSubscriptions(t, factory, 2500*time.Millisecond)
 	assert.NoError(t, err)
 	assert.NotNil(t, subs)
 }

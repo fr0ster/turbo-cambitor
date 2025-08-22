@@ -34,7 +34,7 @@ func NewDefault(useTestNet ...bool) WebStream {
 		useTestNet = append(useTestNet, false)
 	}
 	if useTestNet[0] {
-		wsHost = "testnet.binance.vision"
+		wsHost = "stream.testnet.binance.vision:9443"
 		wsEndpoint = "ws"
 	} else {
 		wsHost = "stream.binance.com:9443"

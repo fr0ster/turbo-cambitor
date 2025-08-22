@@ -229,36 +229,12 @@ func TestLiquidationOrder(t *testing.T) {
 }
 
 func TestContractInfo(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 	doneCh := make(chan struct{}, 1)
 	stream, err := web_stream.NewDefault(true).
-		ContractInfo().
-		SetSymbol("BTCUSDT").
-		SetMessageLogger(func(message web_socket.LogRecord) {
-			if message.Body == nil {
-				return
-			}
-			js, err := simplejson.NewJson(message.Body)
-			if err != nil {
-				logrus.Errorf("Error parsing JSON: %v", err)
-				logrus.Errorf("Message: %s", message.Body)
-				return
-			}
-			kind := web_socket.MessageKind(js.Get("Kind").MustInt())
-			if kind == web_socket.KindData {
-				b := js.Get("Body").MustString()
-				if b == "" {
-					return
-				}
-				logrus.Infof("Received message: %s", b)
-				// if message.Get("e").MustString() == "CONTRACT_INFO" {
-				select {
-				case doneCh <- struct{}{}:
-				default:
-				}
-				// }
-			}
-		}).Connect()
+		Stream().
+		SetMessageLogger(mockHandler).
+		Connect()
 	// SetMessageLogger(mockHandler).
 	// Connect()
 	assert.NoError(t, err)
@@ -289,7 +265,7 @@ func TestContractInfo(t *testing.T) {
 	case <-doneCh:
 		t.Log("Received contract info message")
 	case <-time.After(3 * timeOut):
-		t.Error("Timeout waiting for connection")
+		t.Error("Timeout waiting for contract info message")
 		return
 	}
 	err = stream.Unsubscribe("btcusdt@contractInfo")
