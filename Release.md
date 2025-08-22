@@ -1,5 +1,32 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.3.0
+
+### Release Date: 2025-08-22
+
+#### WebStream (Binance): Dual-connection health monitor
+- Added a dedicated service WebSocket for health checks (Ping/Pong) that supervises the main business connection.
+- New API:
+  - `HealthPing(timeout time.Duration) bool` — on-demand health ping via the service socket.
+  - `WaitHealthy(ctx context.Context) error` — blocks until Healthy or context timeout/cancel.
+  - `SetModeAsync()` / `SetModeSync(defaultTimeout time.Duration)` — control fail-fast vs wait-before-I/O behavior.
+  - `HealthStatus()`, `IsPaused()` — query current health and paused state.
+- Public methods now respect operation mode and health: in Sync mode they wait for Healthy up to the per-call timeout; in Async mode they fail fast when Unhealthy.
+- Automatic pause/resume: on Unhealthy the main stream is paused; on recovery it is resumed with lightweight reconnect semantics.
+
+#### Tests
+- Reconnect tests now rely on `WaitHealthy` instead of server TCP probe helpers to reduce flakiness and debugger sensitivity.
+- Other auth-dependent tests remain gated on API key presence as before.
+
+#### Docs
+- Added bilingual design and roadmap docs under `docs/` describing the architecture, pros/cons, security, and test strategy (versioned):
+  - `docs/DUAL_CONNECTION_DESIGN_v0.3.0_EN.md`, `docs/DUAL_CONNECTION_DESIGN_v0.3.0_UA.md`
+  - `docs/DUAL_CONNECTION_ROADMAP_v0.3.0_EN.md`, `docs/DUAL_CONNECTION_ROADMAP_v0.3.0_UA.md`
+
+---
+
+# Release Notes for Turbo-Cambitor
+
 ## v0.2.34
 
 ### Release Date: 2024-09-17
