@@ -1,5 +1,21 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.3.2
+
+### Release Date: 2025-08-23
+
+#### WebStream (Binance)
+- StreamBuilder is now pluggable:
+  - `WithDialer(*websocket.Dialer)` — supply a custom dialer (proxy/TLS/timeouts).
+  - `WithFactory(func(url string) (web_socket.WebSocketCommonInterface, error))` — override socket creation fully.
+- makeStream() now prefers custom factory, then custom dialer, and falls back to `websocket.DefaultDialer`.
+- Backward compatible: default behavior unchanged when options aren’t used.
+
+#### Tests
+- Added tests to verify `WithFactory` and `WithDialer` flows using a mock WS server.
+
+---
+
 ## v0.3.1
 
 ### Release Date: 2025-08-23
