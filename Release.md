@@ -1,5 +1,18 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.3.1
+
+### Release Date: 2025-08-23
+
+#### WebApi (Binance)
+- Added functional options to make the Web API constructor pluggable:
+  - `WithFactory(func() (web_socket.WebSocketCommonInterface, error))`
+  - `WithWebSocketConfig(web_socket.WebSocketConfig)`
+- New helpers in spot/futures to pass options: `NewDefaultWithOptions(...)`, `NewWithOptions(...)`.
+- Tests and examples added for both option paths.
+
+This is a backward-compatible update; default behavior remains unchanged when no options are provided.
+
 ## v0.3.0
 
 ### Release Date: 2025-08-22
