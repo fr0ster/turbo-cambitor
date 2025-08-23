@@ -66,3 +66,31 @@ func New(host string, endpoint string, scheme string, sign signature.Sign) WebAp
 		sign,
 	)
 }
+
+// NewDefaultWithOptions mirrors NewDefault but allows passing functional options to override the socket factory, timeouts, etc.
+func NewDefaultWithOptions(sign signature.Sign, useTestNet bool, opts ...web_api.Option) WebApi {
+	var (
+		waHost     common.WsHost
+		waEndpoint common.WsEndpoint
+		waScheme   = common.WsSchemeWSS
+	)
+	if useTestNet {
+		waHost = "ws-api.testnet.binance.vision"
+		waEndpoint = "/ws-api/v3"
+	} else {
+		waHost = "ws-api.binance.com"
+		waEndpoint = "/ws-api/v3"
+	}
+	return web_api.New(waHost, waEndpoint, waScheme, sign, opts...)
+}
+
+// NewWithOptions mirrors New but allows passing functional options to override the socket factory, timeouts, etc.
+func NewWithOptions(host string, endpoint string, scheme string, sign signature.Sign, opts ...web_api.Option) WebApi {
+	return web_api.New(
+		common.WsHost(host),
+		common.WsEndpoint(endpoint),
+		common.WsScheme(scheme),
+		sign,
+		opts...,
+	)
+}

@@ -20,23 +20,38 @@ func (wa *WebApiWrapper) Unlock() {
 	wa.mutex.Unlock()
 }
 
+// New creates a WebApiWrapper with a default WebSocket factory.
+// You can override the factory via options like WithFactory or WithWebSocketConfig.
 func New(
 	host common.WsHost,
 	endpoint common.WsEndpoint,
 	scheme common.WsScheme,
-	sign signature.Sign) *WebApiWrapper {
-	factory := func() (web_socket.WebSocketCommonInterface, error) {
-	url := string(scheme) + "://" + string(host) + string(endpoint)
-	return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
+	sign signature.Sign,
+	opts ...Option,
+) *WebApiWrapper {
+	// Default factory uses the legacy constructor with the default dialer
+	defaultFactory := func() (web_socket.WebSocketCommonInterface, error) {
+		url := string(scheme) + "://" + string(host) + string(endpoint)
+		return web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
 	}
-	return &WebApiWrapper{
+
+	wa := &WebApiWrapper{
 		waScheme:   scheme,
 		waHost:     host,
 		waEndpoint: endpoint,
 		mutex:      &sync.Mutex{},
 		sign:       sign,
-		factory:    factory,
+		factory:    defaultFactory,
 	}
+
+	// Apply options (may override factory)
+	for _, opt := range opts {
+		if opt != nil {
+			opt(wa)
+		}
+	}
+
+	return wa
 }
 
 func (wa *WebApiWrapper) SetTimeOut(timeout time.Duration) *WebApiWrapper {
