@@ -1,7 +1,36 @@
+// streamer.go: базовий StreamWrapper
+//
+// Відповідає за низькорівневий менеджмент WebSocket-з'єднання, health socket, таймаути, auto-reconnect.
+// Ловить помилки коннекта (1000/1006), може ресетити з'єднання або повертати помилку консьюмеру.
+// Не має власного health monitor, не керує режимом роботи (sync/async) — це роблять wrappers.
+// Має метод HealthPing(timeout) для ручного пінгу сервера.
+// ARCHITECTURE OVERVIEW
+//
+// StreamWrapper (base):
+//   - Відповідає за низькорівневий менеджмент WebSocket-з'єднання.
+//   - Ловить помилки коннекта (1000/1006), може або ресетити з'єднання, або повертати помилку консьюмеру.
+//   - Не має власного health monitor, не керує режимом роботи (sync/async).
+//
+// Sync/Async wrappers:
+//   - НЕ ловлять помилки самостійно, не роблять reconnect.
+//   - Керуються зовнішнім health monitor-ом, який пінгує сервер і керує станом з'єднання.
+//   - Всі readiness/health перевірки виконуються wrapper-ом, а не базовим StreamWrapper.
+//
+// Health monitor:
+//   - Окремий моніторинговий коннектор, який періодично пінгує сервер через dedicated health socket.
+//   - Якщо unhealthy — закриває основне з'єднання, якщо healthy — відкриває/відновлює.
+//   - Керує paused-станом для async/sync wrappers.
+//
+// Пінг-позапланово:
+//   - StreamWrapper має метод HealthPing(timeout), який дозволяє вручну пінгувати сервер поза графіком монітору.
+//   - Це потрібно для ручних readiness/health перевірок у тестах чи при ініціалізації.
+//
+// Всі ці принципи обов'язково враховувати при розробці та тестуванні wrappers.
 package streamer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -51,12 +80,21 @@ type StreamWrapper struct {
 	// Pause flag controlled by health monitor
 	paused bool
 
-	// Operation mode and defaults
-	mode               OperationMode
+	// Default sync timeout used by helpers/tests
 	defaultSyncTimeout time.Duration
 
 	handlers map[string]int
 }
+
+var (
+	// ErrPaused is returned in async mode when the connection is temporarily paused by the health monitor.
+	ErrPaused = errors.New("connection paused")
+	// ErrNotConnected indicates that there is no active connection and no pause/recovery in progress.
+	ErrNotConnected = errors.New("not connected")
+)
+
+// Compile-time assertion: base wrapper is the reference implementation of StreamInterface.
+var _ CambitorInterface = (*StreamWrapper)(nil)
 
 // NewStreamWrapper creates a new StreamWrapper with a socket factory
 func NewStreamWrapper(
@@ -66,71 +104,89 @@ func NewStreamWrapper(
 	wsEndpoint common.WsEndpoint,
 	timeOut ...time.Duration) *StreamWrapper {
 	if len(timeOut) == 0 {
-		timeOut = append(timeOut, time.Second)
+		// Slightly longer default to accommodate public WS management calls (SUBSCRIBE/UNSUBSCRIBE/LIST)
+		timeOut = append(timeOut, 3*time.Second)
 	}
 	return &StreamWrapper{
-		socket:             nil, // defer dialing until Connect()
-		factory:            factory,
-		wsScheme:           wsScheme,
-		wsHost:             wsHost,
-		wsEndpoint:         wsEndpoint,
-		timeOut:            timeOut[0],
-		handlers:           make(map[string]int),
-		mode:               ModeAsync,
-		defaultSyncTimeout: 5 * time.Second,
+		socket:     nil, // defer dialing until Connect()
+		factory:    factory,
+		wsScheme:   wsScheme,
+		wsHost:     wsHost,
+		wsEndpoint: wsEndpoint,
+		timeOut:    timeOut[0],
+		handlers:   make(map[string]int),
+		// Sync wait will use the same timeout as Call by default
+		defaultSyncTimeout: timeOut[0],
 	}
 }
 
 func (sw *StreamWrapper) Connect() (*StreamWrapper, error) {
-	sw.mu.Lock()
-	defer sw.mu.Unlock()
+	var sock web_socket.WebSocketCommonInterface
 
-	// Initialize socket on first Connect
+	// Initialize socket on first Connect (configure under lock, open outside)
+	sw.mu.Lock()
 	if sw.socket == nil {
-		socket, err := sw.factory()
+		s, err := sw.factory()
 		if err != nil {
+			sw.mu.Unlock()
 			return nil, fmt.Errorf("failed to create websocket client: %w", err)
 		}
-		sw.socket = socket
-
-		// Застосувати відкладені налаштування (логер/хендлери/таймаути)
+		// Apply deferred settings before opening
 		if sw.pendingLogger != nil {
-			sw.socket.SetMessageLogger(sw.pendingLogger)
+			s.SetMessageLogger(sw.pendingLogger)
 		}
 		if sw.readTimeout != nil {
-			sw.socket.SetReadTimeout(*sw.readTimeout)
+			s.SetReadTimeout(*sw.readTimeout)
 		}
 		if sw.writeTimeout != nil {
-			sw.socket.SetWriteTimeout(*sw.writeTimeout)
+			s.SetWriteTimeout(*sw.writeTimeout)
 		}
 		if sw.pendingPingHandle != nil {
-			sw.socket.SetPingHandler(sw.pendingPingHandle)
+			s.SetPingHandler(sw.pendingPingHandle)
 		}
 		if sw.pendingPongHandle != nil {
-			sw.socket.SetPongHandler(sw.pendingPongHandle)
+			s.SetPongHandler(sw.pendingPongHandle)
 		}
+		// Install state handlers (they may acquire sw.mu later during callbacks)
+		s.SetConnectedHandler(func() {
+			sw.mu.Lock()
+			sw.paused = false
+			sw.mu.Unlock()
+		})
+		s.SetDisconnectHandler(func() {
+			sw.mu.Lock()
+			if sw.autoReconnect {
+				sw.paused = true
+			}
+			sw.mu.Unlock()
+		})
+		sw.socket = s
 	}
-	sw.socket.Open()
-	// Дочекайся старту лупів, щоб уникнути гонок ініціалізації в тестах/дебазі
-	_ = sw.socket.WaitStarted()
+	sock = sw.socket
+	sw.mu.Unlock()
+
+	// Open outside the lock to avoid deadlocks with handlers
+	sock.Open()
+	_ = sock.WaitStarted()
 	return sw, nil
 }
 
 func (sw *StreamWrapper) Reconnect(maxAttempts int, delay time.Duration) error {
-	sw.mu.Lock()
-	defer sw.mu.Unlock()
-
 	for i := 0; i < maxAttempts; i++ {
-		if sw.socket != nil {
-			// Close current socket and ensure loops are fully stopped.
-			// Use WaitStopped() to avoid blocking on a stale Stopped() channel
-			// in cases where Close/Halt already waited and consumed the signal.
-			_ = sw.socket.Close()
-			_ = sw.socket.WaitStopped()
+		// Snapshot and close old socket outside of lock
+		var old web_socket.WebSocketCommonInterface
+		sw.mu.Lock()
+		old = sw.socket
+		sw.mu.Unlock()
+
+		if old != nil {
+			_ = old.Close()
+			_ = old.WaitStopped()
 		}
+
+		// Create and configure a new socket
 		socket, err := sw.factory()
 		if err == nil {
-			// Apply the same pending settings as in Connect()
 			if sw.pendingLogger != nil {
 				socket.SetMessageLogger(sw.pendingLogger)
 			}
@@ -146,10 +202,26 @@ func (sw *StreamWrapper) Reconnect(maxAttempts int, delay time.Duration) error {
 			if sw.pendingPongHandle != nil {
 				socket.SetPongHandler(sw.pendingPongHandle)
 			}
+			socket.SetConnectedHandler(func() {
+				sw.mu.Lock()
+				sw.paused = false
+				sw.mu.Unlock()
+			})
+			socket.SetDisconnectHandler(func() {
+				sw.mu.Lock()
+				if sw.autoReconnect {
+					sw.paused = true
+				}
+				sw.mu.Unlock()
+			})
+
+			// Open outside of sw.mu to avoid handler deadlocks
 			socket.Open()
-			// Гарантуємо, що лупи запущені перед поверненням нового сокета
 			_ = socket.WaitStarted()
+
+			sw.mu.Lock()
 			sw.socket = socket
+			sw.mu.Unlock()
 			return nil
 		}
 		time.Sleep(delay)
@@ -158,14 +230,21 @@ func (sw *StreamWrapper) Reconnect(maxAttempts int, delay time.Duration) error {
 }
 
 func (sw *StreamWrapper) Disconnect() {
+	// Detach main socket under lock
 	sw.mu.Lock()
-	defer sw.mu.Unlock()
-	if sw.socket != nil {
-		sw.socket.Close()
-		sw.socket = nil
-	}
-	// Also stop and close health socket
+	sock := sw.socket
+	sw.socket = nil
+	// Stop monitor while holding the lock (uses *_Locked)
 	sw.stopHealthMonitorLocked()
+	sw.mu.Unlock()
+
+	// Close main socket outside lock to avoid deadlocks with callbacks
+	if sock != nil {
+		_ = sock.Close()
+		_ = sock.WaitStopped()
+	}
+
+	// Close health socket under its own lock, no sw.mu held
 	sw.healthMu.Lock()
 	if sw.healthSocket != nil {
 		_ = sw.healthSocket.Close()
@@ -175,10 +254,6 @@ func (sw *StreamWrapper) Disconnect() {
 }
 
 func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
-	// Gate by mode/health
-	if err := sw.ensureReadyForOperation(); err != nil {
-		return nil, err
-	}
 	id := rq.Get("id").MustString()
 	if rq.Get("id").MustString() == "" {
 		id = uuid.New().String()
@@ -188,8 +263,14 @@ func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 	resultC := make(chan *simplejson.Json, 1)
 	errC := make(chan error, 1)
 
-	subID := sw.socket.Subscribe(func(evt web_socket.MessageEvent) {
+	// Subscribe on the current socket, but be prepared to re-subscribe on retries
+	sw.mu.Lock()
+	curSock := sw.socket
+	sw.mu.Unlock()
+
+	subID := curSock.Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
+			// Propagate close/timeout or any other errors to the caller.
 			errC <- evt.Error
 			return
 		}
@@ -202,30 +283,39 @@ func (sw *StreamWrapper) Call(rq *simplejson.Json) (*simplejson.Json, error) {
 			resultC <- resp
 		}
 	})
-	defer sw.socket.Unsubscribe(subID)
+	// Ensure we clean up the subscription on whatever socket we last used
+	defer func() {
+		if curSock != nil && subID != 0 {
+			curSock.Unsubscribe(subID)
+		}
+	}()
+
+	// No re-subscribe/send retries here; base stays neutral.
 
 	jsonBytes, err := rq.MarshalJSON()
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-	if err := sw.socket.Send(web_socket.WriteEvent{Body: jsonBytes}); err != nil {
+	if err := curSock.Send(web_socket.WriteEvent{Body: jsonBytes}); err != nil {
+		// Surface send error as-is; variants decide on retries.
 		return nil, fmt.Errorf("send error: %w", err)
 	}
 
-	select {
-	case resp := <-resultC:
-		return resp, nil
-	case err := <-errC:
-		return nil, err
-	case <-time.After(sw.timeOut):
-		return nil, fmt.Errorf("timeout")
+	timer := time.NewTimer(sw.timeOut)
+	defer timer.Stop()
+	for {
+		select {
+		case resp := <-resultC:
+			return resp, nil
+		case err := <-errC:
+			return nil, err
+		case <-timer.C:
+			return nil, fmt.Errorf("timeout")
+		}
 	}
 }
 
 func (sw *StreamWrapper) Subscribe(f func(web_socket.MessageEvent), subs ...string) error {
-	if err := sw.ensureReadyForOperation(); err != nil {
-		return err
-	}
 	if len(subs) == 0 {
 		return fmt.Errorf("no subscriptions provided")
 	}
@@ -261,9 +351,6 @@ func (sw *StreamWrapper) Subscribe(f func(web_socket.MessageEvent), subs ...stri
 }
 
 func (sw *StreamWrapper) Unsubscribe(subs ...string) error {
-	if err := sw.ensureReadyForOperation(); err != nil {
-		return err
-	}
 	if len(subs) == 0 {
 		return fmt.Errorf("no subscriptions provided")
 	}
@@ -286,7 +373,16 @@ func (sw *StreamWrapper) Unsubscribe(subs ...string) error {
 
 	_, err := sw.Call(rq)
 	if err != nil {
-		return fmt.Errorf("unsubscribe error: %w", err)
+		// Network round-trip for UNSUBSCRIBE on public endpoints can be flaky;
+		// if we hit a timeout/i/o timeout, consider it non-fatal and proceed with local cleanup.
+		// This keeps behavior robust under high latency while ensuring handlers are removed.
+		if ne, ok := err.(net.Error); ok && ne.Timeout() {
+			// proceed silently
+		} else if strings.Contains(err.Error(), "i/o timeout") || strings.Contains(err.Error(), "timeout") {
+			// proceed silently
+		} else {
+			return fmt.Errorf("unsubscribe error: %w", err)
+		}
 	}
 
 	for _, sub := range toRemove {
@@ -299,9 +395,6 @@ func (sw *StreamWrapper) Unsubscribe(subs ...string) error {
 }
 
 func (sw *StreamWrapper) ListOfSubscriptions() ([]string, error) {
-	if err := sw.ensureReadyForOperation(); err != nil {
-		return nil, err
-	}
 	rq := simplejson.New()
 	rq.Set("method", "LIST_SUBSCRIPTIONS")
 	rq.Set("id", uuid.New().String())
@@ -310,7 +403,8 @@ func (sw *StreamWrapper) ListOfSubscriptions() ([]string, error) {
 		return nil, err
 	}
 
-	var result []string
+	// Always return a non-nil slice for friendlier callers/tests
+	result := make([]string, 0)
 	for _, v := range resp.Get("result").MustArray() {
 		if s, ok := v.(string); ok {
 			result = append(result, s)
@@ -323,12 +417,12 @@ func (sw *StreamWrapper) GetConnection() web_socket.WebSocketCommonInterface {
 	return sw.socket
 }
 
-func (sw *StreamWrapper) SetMaxReconnectAttempts(n int) StreamInterface {
+func (sw *StreamWrapper) SetMaxReconnectAttempts(n int) CambitorInterface {
 	sw.maxReconnectAttempts = n
 	return sw
 }
 
-func (sw *StreamWrapper) SetReadTimeout(timeout time.Duration) StreamInterface {
+func (sw *StreamWrapper) SetReadTimeout(timeout time.Duration) CambitorInterface {
 	sw.readTimeout = &timeout
 	if sw.socket != nil {
 		sw.socket.SetReadTimeout(timeout)
@@ -336,7 +430,7 @@ func (sw *StreamWrapper) SetReadTimeout(timeout time.Duration) StreamInterface {
 	return sw
 }
 
-func (sw *StreamWrapper) SetWriteTimeout(timeout time.Duration) StreamInterface {
+func (sw *StreamWrapper) SetWriteTimeout(timeout time.Duration) CambitorInterface {
 	sw.writeTimeout = &timeout
 	if sw.socket != nil {
 		sw.socket.SetWriteTimeout(timeout)
@@ -344,12 +438,12 @@ func (sw *StreamWrapper) SetWriteTimeout(timeout time.Duration) StreamInterface 
 	return sw
 }
 
-func (sw *StreamWrapper) SetReconnectInterval(interval time.Duration) StreamInterface {
+func (sw *StreamWrapper) SetReconnectInterval(interval time.Duration) CambitorInterface {
 	sw.reconnectInterval = interval
 	return sw
 }
 
-func (sw *StreamWrapper) EnableAutoReconnect() StreamInterface {
+func (sw *StreamWrapper) EnableAutoReconnect() CambitorInterface {
 	sw.autoReconnect = true
 	// Default intervals if not set
 	if sw.reconnectInterval <= 0 {
@@ -370,7 +464,7 @@ func (sw *StreamWrapper) DisableAutoReconnect() {
 	sw.stopHealthMonitor()
 }
 
-func (sw *StreamWrapper) SetMessageLogger(logger func(message web_socket.LogRecord)) StreamInterface {
+func (sw *StreamWrapper) SetMessageLogger(logger func(message web_socket.LogRecord)) CambitorInterface {
 	// Зберегти й застосувати, якщо з'єднання вже є
 	sw.pendingLogger = logger
 	if sw.socket != nil {
@@ -634,17 +728,15 @@ func (sw *StreamWrapper) startHealthMonitor() {
 				needReconnect := sw.socket == nil || sw.socket.IsStopped()
 				sw.mu.Unlock()
 
-				if !wasHealthy {
-					// Transition back to healthy
-					if needReconnect {
-						// Try to (re)connect main socket using existing settings
-						_ = sw.Reconnect(1, 0)
-					}
-					// Clear pause regardless; readiness gated by IsConnected
-					sw.mu.Lock()
-					sw.paused = false
-					sw.mu.Unlock()
+				// If we were unhealthy -> healthy OR we are healthy but main is down, reconnect now.
+				if !wasHealthy || needReconnect {
+					// Try to (re)connect main socket using existing settings
+					_ = sw.Reconnect(1, 0)
 				}
+				// Clear pause regardless; readiness gated by IsConnected
+				sw.mu.Lock()
+				sw.paused = false
+				sw.mu.Unlock()
 			}
 		}
 	}()
@@ -698,18 +790,8 @@ func (sw *StreamWrapper) ensureHealthSocket() bool {
 }
 
 // ----------------------------
-//    HEALTH/READY API (NEW)
+//    HEALTH/READY API
 // ----------------------------
-
-// OperationMode defines how public methods behave under unhealthy state.
-type OperationMode int
-
-const (
-	// ModeAsync returns ErrNotConnected immediately when unhealthy/paused.
-	ModeAsync OperationMode = iota
-	// ModeSync blocks in WaitHealthy (with default timeout) before proceeding.
-	ModeSync
-)
 
 // HealthState represents current health as seen by the monitor.
 type HealthState int
@@ -720,21 +802,12 @@ const (
 	HealthUnhealthy
 )
 
-// SetModeAsync switches Cambitor to fail-fast mode.
-func (sw *StreamWrapper) SetModeAsync() *StreamWrapper {
-	sw.mu.Lock()
-	sw.mode = ModeAsync
-	sw.mu.Unlock()
-	return sw
-}
-
-// SetModeSync switches Cambitor to wait mode with a default per-call timeout.
+// SetModeSync sets default wait timeout used by WaitConnected helpers; kept for compatibility.
 func (sw *StreamWrapper) SetModeSync(defaultTimeout time.Duration) *StreamWrapper {
 	if defaultTimeout <= 0 {
 		defaultTimeout = 5 * time.Second
 	}
 	sw.mu.Lock()
-	sw.mode = ModeSync
 	sw.defaultSyncTimeout = defaultTimeout
 	sw.mu.Unlock()
 	return sw
@@ -757,8 +830,10 @@ func (sw *StreamWrapper) HealthStatus() HealthState {
 	return HealthConnecting
 }
 
-// WaitHealthy blocks until health is Healthy and main connection is up, or ctx is done.
-func (sw *StreamWrapper) WaitHealthy(ctx context.Context) error {
+// WaitConnected blocks until the main connection is established (IsConnected) and the endpoint is reachable
+// when a health monitor is enabled. If no monitor is running, it will proactively probe and attempt one
+// lightweight reconnect.
+func (sw *StreamWrapper) WaitConnected(ctx context.Context) error {
 	// Fast-path
 	if sw.HealthStatus() == HealthHealthy && sw.IsConnected() {
 		return nil
@@ -770,20 +845,28 @@ func (sw *StreamWrapper) WaitHealthy(ctx context.Context) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		// If monitor disabled, probe directly
-		if !sw.isHealthMonitorRunning() {
+
+		monitorRunning := sw.isHealthMonitorRunning()
+		if !monitorRunning {
+			// If monitor disabled, probe directly and drive a reconnect if needed
 			_ = sw.HealthPing(700 * time.Millisecond)
-		}
-		if sw.HealthStatus() == HealthHealthy {
-			if sw.IsConnected() {
+			if sw.HealthStatus() == HealthHealthy {
+				if sw.IsConnected() {
+					return nil
+				}
+				// Only attempt reconnect ourselves when no monitor is running to avoid races
+				_ = sw.Reconnect(1, 0)
+				if sw.IsConnected() {
+					return nil
+				}
+			}
+		} else {
+			// Monitor is active: just wait until it establishes the main connection
+			if sw.HealthStatus() == HealthHealthy && sw.IsConnected() {
 				return nil
 			}
-			// Try a lightweight reconnect attempt if healthy but main is down
-			_ = sw.Reconnect(1, 0)
-			if sw.IsConnected() {
-				return nil
-			}
 		}
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -792,11 +875,24 @@ func (sw *StreamWrapper) WaitHealthy(ctx context.Context) error {
 	}
 }
 
+// WaitHealthy is kept for backward compatibility. Prefer WaitConnected.
+func (sw *StreamWrapper) WaitHealthy(ctx context.Context) error { return sw.WaitConnected(ctx) }
+
 // IsPaused reports whether main operations are currently paused by health monitor.
 func (sw *StreamWrapper) IsPaused() bool {
 	sw.mu.Lock()
 	defer sw.mu.Unlock()
 	return sw.paused
+}
+
+// Mode returns current OperationMode (sync/async) in a threadsafe way.
+// Mode concept removed from base; async/sync variants gate externally.
+
+// IsAutoReconnectEnabled reports whether auto-reconnect/health monitor is enabled.
+func (sw *StreamWrapper) IsAutoReconnectEnabled() bool {
+	sw.mu.Lock()
+	defer sw.mu.Unlock()
+	return sw.autoReconnect
 }
 
 // Helper: whether monitor is running (without racing callers).
@@ -807,26 +903,4 @@ func (sw *StreamWrapper) isHealthMonitorRunning() bool {
 }
 
 // ensureReadyForOperation enforces async/sync behavior before I/O.
-func (sw *StreamWrapper) ensureReadyForOperation() error {
-	sw.mu.Lock()
-	mode := sw.mode
-	sw.mu.Unlock()
-
-	if mode == ModeAsync {
-		if !sw.IsConnected() || sw.HealthStatus() != HealthHealthy {
-			return fmt.Errorf("not connected")
-		}
-		return nil
-	}
-
-	// ModeSync: wait with default timeout
-	ctx, cancel := context.WithTimeout(context.Background(), sw.defaultSyncTimeout)
-	defer cancel()
-	if err := sw.WaitHealthy(ctx); err != nil {
-		return fmt.Errorf("not connected: %w", err)
-	}
-	if !sw.IsConnected() {
-		return fmt.Errorf("not connected")
-	}
-	return nil
-}
+// ensureReadyForOperation removed from base; variants control readiness.

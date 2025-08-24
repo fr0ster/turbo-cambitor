@@ -1,46 +1,52 @@
 package streamer
 
 import (
+	"context"
 	"time"
 
+	"github.com/bitly/go-simplejson"
 	"github.com/fr0ster/turbo-restler/web_socket"
 )
 
-// StreamInterface describes only the business-level logic for working with streams
-type StreamInterface interface {
-	// Connect establishes a WebSocket connection and starts the stream
+// CambitorInterface mirrors the full public API of StreamWrapper so all variants implement the same contract.
+type CambitorInterface interface {
+	// Connection lifecycle
 	Connect() (*StreamWrapper, error)
-
-	// Reconnect recreates the connection with retry attempts
 	Reconnect(maxAttempts int, delay time.Duration) error
-
-	// Disconnect closes the WebSocket connection
 	Disconnect()
 
-	// Subscribe sends a business-level subscription (e.g., to Binance)
+	// Business operations
+	Call(rq *simplejson.Json) (*simplejson.Json, error)
 	Subscribe(f func(web_socket.MessageEvent), subscriptions ...string) error
-
-	// Unsubscribe removes a subscription from the business stream
 	Unsubscribe(subscriptions ...string) error
-
-	// ListOfSubscriptions returns the current business-level subscriptions
 	ListOfSubscriptions() ([]string, error)
 
-	// GetConnection returns the underlying WebSocket connection, if it needs to be passed further
+	// Access to underlying socket
 	GetConnection() web_socket.WebSocketCommonInterface
 
-	// SetMaxReconnectAttempts sets the maximum number of reconnect attempts
-	SetMaxReconnectAttempts(n int) StreamInterface
-
-	// SetReconnectInterval sets the interval between reconnect attempts
-	SetReconnectInterval(interval time.Duration) StreamInterface
-
-	// EnableAutoReconnect enables automatic reconnection
-	EnableAutoReconnect() StreamInterface
-
-	// DisableAutoReconnect disables automatic reconnection
+	// Configuration
+	SetMaxReconnectAttempts(n int) CambitorInterface
+	SetReadTimeout(timeout time.Duration) CambitorInterface
+	SetWriteTimeout(timeout time.Duration) CambitorInterface
+	SetReconnectInterval(interval time.Duration) CambitorInterface
+	EnableAutoReconnect() CambitorInterface
 	DisableAutoReconnect()
+	SetMessageLogger(logger func(message web_socket.LogRecord)) CambitorInterface
+	SetPingHandler(handler func(string) error)
+	SetPongHandler(handler func(string) error)
 
-	// SetMessageLogger sets a function for logging messages
-	SetMessageLogger(logger func(message web_socket.LogRecord)) StreamInterface
+	// Readiness/health helpers
+	WaitReady(ctx context.Context, probeInterval time.Duration) error
+	WaitServerListening(timeout time.Duration) bool
+	WaitForPong(timeout time.Duration) bool
+	IsConnected() bool
+	HealthPing(timeout time.Duration) bool
+
+	// Health state and readiness
+	SetModeSync(defaultTimeout time.Duration) *StreamWrapper
+	HealthStatus() HealthState
+	WaitConnected(ctx context.Context) error
+	WaitHealthy(ctx context.Context) error
+	IsPaused() bool
+	IsAutoReconnectEnabled() bool
 }

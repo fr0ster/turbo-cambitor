@@ -7,6 +7,8 @@ import (
 
 	common "github.com/fr0ster/turbo-cambitor/common"
 	stream "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream"
+	asyncvar "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream/async"
+	syncvar "github.com/fr0ster/turbo-cambitor/web_stream/binance/common/stream/sync"
 	web_socket "github.com/fr0ster/turbo-restler/web_socket"
 
 	"github.com/gorilla/websocket"
@@ -37,7 +39,7 @@ type StreamBuilder struct {
 	socketFactory func(url string) (web_socket.WebSocketCommonInterface, error)
 }
 
-func (wa *StreamBuilder) makeStream() stream.StreamInterface {
+func (wa *StreamBuilder) makeStream() stream.CambitorInterface {
 	factory := func() (web_socket.WebSocketCommonInterface, error) {
 		url := string(wa.wsScheme) + "://" + string(wa.wsHost)
 		if wa.EndpointPrefix != "" {
@@ -143,7 +145,7 @@ func (wa *StreamBuilder) ContractInfo() *StreamBuilder {
 	return wa
 }
 
-func (wa *StreamBuilder) SetSymbol(symbol string) stream.StreamInterface {
+func (wa *StreamBuilder) SetSymbol(symbol string) stream.CambitorInterface {
 	wa.symbol = symbol
 	if symbol != "" {
 		wa.EndpointSuffix = common.WsEndpoint(fmt.Sprintf("%s%s", strings.ToLower(symbol), wa.EndpointSuffix))
@@ -151,8 +153,74 @@ func (wa *StreamBuilder) SetSymbol(symbol string) stream.StreamInterface {
 	return wa.makeStream()
 }
 
-func (wa *StreamBuilder) Stream() stream.StreamInterface {
+func (wa *StreamBuilder) Stream() stream.CambitorInterface {
 	return wa.makeStream()
+}
+
+// StreamNoAuto returns a Stream without auto-reconnect in sync mode.
+func (wa *StreamBuilder) StreamNoAuto() stream.CambitorInterface {
+	factory := func() (web_socket.WebSocketCommonInterface, error) {
+		url := string(wa.wsScheme) + "://" + string(wa.wsHost)
+		if wa.EndpointPrefix != "" {
+			url = url + "/" + string(wa.EndpointPrefix)
+		}
+		if wa.EndpointSuffix != "" {
+			url = url + "/" + string(wa.EndpointSuffix)
+		}
+		if wa.socketFactory != nil {
+			return wa.socketFactory(url)
+		}
+		d := wa.dialer
+		if d == nil {
+			d = websocket.DefaultDialer
+		}
+		return web_socket.NewWebSocketWrapper(d, url)
+	}
+	return stream.NewStreamWrapper(factory, wa.wsScheme, wa.wsHost, wa.EndpointPrefix)
+}
+
+// StreamSync returns a Stream with auto-reconnect enabled in sync mode.
+func (wa *StreamBuilder) StreamSync() stream.CambitorInterface {
+	factory := func() (web_socket.WebSocketCommonInterface, error) {
+		url := string(wa.wsScheme) + "://" + string(wa.wsHost)
+		if wa.EndpointPrefix != "" {
+			url = url + "/" + string(wa.EndpointPrefix)
+		}
+		if wa.EndpointSuffix != "" {
+			url = url + "/" + string(wa.EndpointSuffix)
+		}
+		if wa.socketFactory != nil {
+			return wa.socketFactory(url)
+		}
+		d := wa.dialer
+		if d == nil {
+			d = websocket.DefaultDialer
+		}
+		return web_socket.NewWebSocketWrapper(d, url)
+	}
+	return syncvar.NewStreamWrapper(factory, wa.wsScheme, wa.wsHost, wa.EndpointPrefix)
+}
+
+// StreamAsync returns a Stream with auto-reconnect enabled in async fail-fast mode.
+func (wa *StreamBuilder) StreamAsync() stream.CambitorInterface {
+	factory := func() (web_socket.WebSocketCommonInterface, error) {
+		url := string(wa.wsScheme) + "://" + string(wa.wsHost)
+		if wa.EndpointPrefix != "" {
+			url = url + "/" + string(wa.EndpointPrefix)
+		}
+		if wa.EndpointSuffix != "" {
+			url = url + "/" + string(wa.EndpointSuffix)
+		}
+		if wa.socketFactory != nil {
+			return wa.socketFactory(url)
+		}
+		d := wa.dialer
+		if d == nil {
+			d = websocket.DefaultDialer
+		}
+		return web_socket.NewWebSocketWrapper(d, url)
+	}
+	return asyncvar.NewStreamWrapper(factory, wa.wsScheme, wa.wsHost, wa.EndpointPrefix)
 }
 
 // WithDialer allows to set a custom websocket dialer (proxy/TLS/etc.).

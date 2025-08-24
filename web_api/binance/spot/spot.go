@@ -1,6 +1,8 @@
 package spot_web_api
 
 import (
+	"time"
+
 	"github.com/bitly/go-simplejson"
 	"github.com/fr0ster/turbo-cambitor/common"
 	request "github.com/fr0ster/turbo-cambitor/web_api/binance/common/request"
@@ -55,7 +57,7 @@ func NewDefault(sign signature.Sign, useTestNet ...bool) WebApi {
 		waEndpoint = "/ws-api/v3"
 		waScheme = common.WsSchemeWSS
 	}
-	return web_api.New(waHost, waEndpoint, waScheme, sign)
+	return web_api.New(waHost, waEndpoint, waScheme, sign, web_api.WithTimeouts(30*time.Second, 30*time.Second))
 }
 
 func New(host string, endpoint string, scheme string, sign signature.Sign) WebApi {
@@ -81,6 +83,7 @@ func NewDefaultWithOptions(sign signature.Sign, useTestNet bool, opts ...web_api
 		waHost = "ws-api.binance.com"
 		waEndpoint = "/ws-api/v3"
 	}
+	opts = append([]web_api.Option{web_api.WithTimeouts(30*time.Second, 30*time.Second)}, opts...)
 	return web_api.New(waHost, waEndpoint, waScheme, sign, opts...)
 }
 

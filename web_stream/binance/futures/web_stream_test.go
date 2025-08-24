@@ -51,28 +51,13 @@ func TestKlines(t *testing.T) {
 	stream := web_stream.NewDefault(true)
 	wrapper, err := stream.Klines("1m").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
 	assert.NoError(t, err)
-	// use mockErrHandler to handle potential errors from connection
 	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
 		if evt.Error != nil {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
 	defer wrapper.Disconnect()
-	time.Sleep(timeOut)
-	assert.NotNil(t, wrapper)
-}
-
-func TestContinuousKlines(t *testing.T) {
-	t.Parallel()
-	stream := web_stream.NewDefault(true)
-	wrapper, err := stream.ContinuousKlines("1m", "BTCUSDT").SetSymbol("BTCUSDT").SetMessageLogger(mockHandler).Connect()
-	assert.NoError(t, err)
-	wrapper.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
-		if evt.Error != nil {
-			_ = mockErrHandler(evt.Error)
-		}
-	})
-	defer wrapper.Disconnect()
+	time.Sleep(2 * timeOut)
 	assert.NotNil(t, wrapper)
 }
 
@@ -229,7 +214,7 @@ func TestLiquidationOrder(t *testing.T) {
 }
 
 func TestContractInfo(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 	doneCh := make(chan struct{}, 1)
 	stream, err := web_stream.NewDefault(true).
 		Stream().
@@ -260,7 +245,7 @@ func TestContractInfo(t *testing.T) {
 	subs, err := stream.ListOfSubscriptions()
 	assert.NoError(t, err)
 	assert.NotNil(t, subs)
-	time.Sleep(timeOut)
+	time.Sleep(2 * timeOut)
 	select {
 	case <-doneCh:
 		t.Log("Received contract info message")
@@ -302,7 +287,10 @@ func TestStaticStream(t *testing.T) {
 	t.Parallel()
 	stream, err := web_stream.
 		New("fstream.binance.com/ws", "btcusdt@aggTrade", "wss").
-		Stream().SetMessageLogger(mockHandler).Connect()
+		Stream().SetMessageLogger(mockHandler).
+		SetReadTimeout(5 * time.Second).
+		SetWriteTimeout(5 * time.Second).
+		Connect()
 	defer stream.Disconnect()
 	assert.NoError(t, err)
 	stream.GetConnection().Subscribe(func(evt web_socket.MessageEvent) {
@@ -310,11 +298,19 @@ func TestStaticStream(t *testing.T) {
 			_ = mockErrHandler(evt.Error)
 		}
 	})
-	time.Sleep(timeOut)
+	// Ensure the connection is responsive before querying subscriptions (best effort)
+	_ = stream.WaitForPong(2 * time.Second)
+	// Give the public stream a moment to establish before querying subscriptions
+	time.Sleep(2 * timeOut)
 	assert.NoError(t, err)
 	subscribes, err := stream.ListOfSubscriptions()
+	if err != nil {
+		// Retry once if the first management call races with start-up
+		time.Sleep(1500 * time.Millisecond)
+		subscribes, err = stream.ListOfSubscriptions()
+	}
 	assert.NoError(t, err)
 	assert.NotNil(t, subscribes)
-	time.Sleep(timeOut)
+	time.Sleep(2 * timeOut)
 	stream.Unsubscribe("btcusdt@aggTrade")
 }

@@ -38,7 +38,6 @@ func TestAccountBalance(t *testing.T) {
 
 // Test 3: Account Information
 func TestAccountInformation(t *testing.T) {
-	t.Parallel()
 	if !assert.True(t, requireFuturesAPIKeys(t), "FUTURE_TEST_BINANCE_API_KEY/SECRET_KEY must be set") {
 		return
 	}

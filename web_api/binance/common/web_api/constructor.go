@@ -12,6 +12,21 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// WithTimeouts задає таймаути для клієнта WebAPI
+func WithTimeouts(read, write time.Duration) Option {
+	return func(wa *WebApiWrapper) {
+		if wa.connection != nil {
+			wa.connection.SetReadTimeout(read)
+			wa.connection.SetWriteTimeout(write)
+		}
+		// Для сумісності: якщо timeout ще не заданий, зберігаємо в полі
+		if wa.timeout == nil {
+			wa.timeout = new(time.Duration)
+			*wa.timeout = read
+		}
+	}
+}
+
 func (wa *WebApiWrapper) Lock() {
 	wa.mutex.Lock()
 }

@@ -1,3 +1,6 @@
+// mock_server.go: мок-сервер для тестування wrappers
+//
+// Дозволяє тестувати поведінку wrappers, health monitor, reconnect, паузи, пінги.
 package mock_server
 
 import (

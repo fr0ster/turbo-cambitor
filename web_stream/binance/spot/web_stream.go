@@ -20,8 +20,8 @@ type WebStream interface {
 	MarkPrice() *builder.StreamBuilder
 	LiquidationOrder() *builder.StreamBuilder
 	ContractInfo() *builder.StreamBuilder
-	SetSymbol(symbol string) stream.StreamInterface
-	Stream() stream.StreamInterface
+	SetSymbol(symbol string) stream.CambitorInterface
+	Stream() stream.CambitorInterface
 }
 
 func NewDefault(useTestNet ...bool) WebStream {

@@ -22,18 +22,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var mockPort int
+
 func TestMain(m *testing.M) {
 	flag.Parse()
 
 	// Start server only once for all tests
-	port := mock_server.StartReusableMockServer(0)
-	os.Setenv("MOCK_STREAM_PORT", fmt.Sprintf("%d", port))
+	mockPort = mock_server.StartReusableMockServer(0)
+	// run tests
 	os.Exit(m.Run())
 }
 
 func newStreamWrapper() *streamer.StreamWrapper {
 	scheme := "ws"
-	host := fmt.Sprintf("localhost:%s", os.Getenv("MOCK_STREAM_PORT"))
+	host := fmt.Sprintf("localhost:%d", mockPort)
 	endpoint := "/ws"
 	factory := func() (web_socket.WebSocketCommonInterface, error) {
 		url := fmt.Sprintf("%s://%s%s", scheme, host, endpoint)
@@ -41,6 +43,12 @@ func newStreamWrapper() *streamer.StreamWrapper {
 	}
 
 	sw := streamer.NewStreamWrapper(factory, common.WsScheme(scheme), common.WsHost(host), common.WsEndpoint(endpoint))
+
+	// Loosen deadlines to avoid spurious i/o timeouts in CI
+	sw.SetReadTimeout(3 * time.Second)
+	sw.SetWriteTimeout(3 * time.Second)
+	// Be a bit more patient on readiness in tests
+	sw.SetModeSync(3 * time.Second)
 
 	if _, err := sw.Connect(); err != nil {
 		panic(err)
@@ -77,7 +85,7 @@ func TestSubscribers(t *testing.T) {
 	time.Sleep(1 * time.Second)
 }
 func TestMultiSubscribers(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 	sw := newStreamWrapper()
 
 	// Перелік стрімів
@@ -350,7 +358,7 @@ func TestAbruptCloseStreamer(t *testing.T) {
 var closeMutex = &sync.Mutex{}
 
 func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
-	// t.Parallel()
+	t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	func() {
@@ -382,7 +390,7 @@ func TestGracefulCloseStreamer_WithRestart(t *testing.T) {
 }
 
 func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
-	// t.Parallel()
+	t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	func() {
@@ -414,7 +422,7 @@ func TestAbruptCloseStreamer_WithRestart(t *testing.T) {
 }
 
 func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
-	// t.Parallel()
+	t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	sw := newStreamWrapper()
@@ -431,12 +439,10 @@ func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
 	assert.Error(t, err, "should return error due to graceful close")
 	assert.Nil(t, resp)
 
-	// Дочекайся відновлення здоров'я (через сервісний канал) і підняття основного коннекту
+	// Дочекайся відновлення коннекту (через сервісний канал/монітор)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	assert.NoError(t, sw.WaitHealthy(ctx), "should auto-recover after CLOSE_GRACEFUL with restart")
-	// Після відновлення можна вимкнути авто-реконнект і виконати простий Call
-	sw.DisableAutoReconnect()
+	assert.NoError(t, sw.WaitConnected(ctx), "should auto-recover after CLOSE_GRACEFUL with restart")
 	rq2 := simplejson.New()
 	rq2.Set("method", "LIST_SUBSCRIPTIONS")
 	rq2.Set("id", "post-recover")
@@ -446,14 +452,12 @@ func TestGracefulCloseStreamer_WithAutoReconnect(t *testing.T) {
 }
 
 func TestAbruptCloseStreamer_WithAutoReconnect(t *testing.T) {
-	// t.Parallel()
+	t.Parallel()
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	sw := newStreamWrapper()
 	// Give more room for abrupt close + server restart timing
 	sw.SetMaxReconnectAttempts(10).SetReconnectInterval(200 * time.Millisecond).EnableAutoReconnect()
-
-	defer sw.DisableAutoReconnect()
 
 	rq := simplejson.New()
 	rq.Set("method", "CLOSE_ABRUPT")
@@ -464,10 +468,10 @@ func TestAbruptCloseStreamer_WithAutoReconnect(t *testing.T) {
 	assert.Error(t, err, "should return error due to abrupt close")
 	assert.Nil(t, resp)
 
-	// Дочекайся відновлення здоров'я (через сервісний канал) і підняття основного коннекту
+	// Дочекайся відновлення коннекту (через сервісний канал/монітор)
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 	defer cancel()
-	assert.NoError(t, sw.WaitHealthy(ctx), "should auto-recover after CLOSE_ABRUPT with restart")
+	assert.NoError(t, sw.WaitConnected(ctx), "should auto-recover after CLOSE_ABRUPT with restart")
 	// Після відновлення можна вимкнути авто-реконнект і виконати простий Call
 	sw.DisableAutoReconnect()
 	rq2 := simplejson.New()
@@ -644,7 +648,7 @@ func Test_ListOfSubscriptions_Helper(t *testing.T) {
 	closeMutex.Lock()
 	defer closeMutex.Unlock()
 	scheme := "ws"
-	host := fmt.Sprintf("localhost:%s", os.Getenv("MOCK_STREAM_PORT"))
+	host := fmt.Sprintf("localhost:%d", mockPort)
 	endpoint := "/ws"
 	factory := func() (web_socket.WebSocketCommonInterface, error) {
 		url := fmt.Sprintf("%s://%s%s", scheme, host, endpoint)

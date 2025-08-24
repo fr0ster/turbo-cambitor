@@ -1,6 +1,8 @@
 package futures_web_api
 
 import (
+	"time"
+
 	"github.com/bitly/go-simplejson"
 	"github.com/fr0ster/turbo-cambitor/common"
 	request "github.com/fr0ster/turbo-cambitor/web_api/binance/common/request"
@@ -8,6 +10,9 @@ import (
 
 	signature "github.com/fr0ster/turbo-signer/v2/signature"
 )
+
+// WithTimeouts експортується для тестів та користувачів API
+var WithTimeouts = web_api.WithTimeouts
 
 type WebApi interface {
 	AccountBalance() *request.RequestBuilder
@@ -56,7 +61,7 @@ func NewDefault(sign signature.Sign, useTestNet ...bool) WebApi {
 		waEndpoint = "/ws-fapi/v1"
 		waScheme = common.WsSchemeWSS
 	}
-	return web_api.New(waHost, waEndpoint, waScheme, sign)
+	return web_api.New(waHost, waEndpoint, waScheme, sign, WithTimeouts(30*time.Second, 30*time.Second))
 }
 
 func New(host string, endpoint string, scheme string, sign signature.Sign) WebApi {
@@ -82,6 +87,7 @@ func NewDefaultWithOptions(sign signature.Sign, useTestNet bool, opts ...web_api
 		waHost = "ws-fapi.binance.com"
 		waEndpoint = "/ws-fapi/v1"
 	}
+	opts = append([]web_api.Option{web_api.WithTimeouts(30*time.Second, 30*time.Second)}, opts...)
 	return web_api.New(waHost, waEndpoint, waScheme, sign, opts...)
 }
 
