@@ -39,3 +39,6 @@ _ = resp; _ = err
 
 ## Notes
 - Tests that require exchange credentials are gated by API key presence only.
+
+## What's new
+- 2025-08-24: Bumped `github.com/fr0ster/turbo-restler` to `v0.15.0`. Local monorepo development uses `replace ../turbo-restler` as before.

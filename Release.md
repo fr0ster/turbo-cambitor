@@ -1,5 +1,19 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.3.3
+
+### Release Date: 2025-08-24
+
+### Chore
+- Upgraded dependency: `github.com/fr0ster/turbo-restler` → `v0.15.0`.
+
+### Compatibility
+- No public API changes in turbo-cambitor; all existing RestAPI/WebStream code compiles against `v0.15.0`.
+- Local development continues to use the monorepo replace directive: `replace github.com/fr0ster/turbo-restler => ../turbo-restler`.
+
+### Docs
+- README updated to mention the new `turbo-restler` version.
+
 ## v0.3.2
 
 ### Release Date: 2025-08-23
