@@ -32,6 +32,9 @@ type StreamBuilder struct {
 	EndpointPrefix common.WsEndpoint
 	EndpointSuffix common.WsEndpoint
 	symbol         string
+	// optional overrides
+	dialer        *websocket.Dialer
+	socketFactory func(url string) (web_socket.WebSocketCommonInterface, error)
 }
 
 func (wa *StreamBuilder) makeStream() stream.StreamInterface {
@@ -43,7 +46,16 @@ func (wa *StreamBuilder) makeStream() stream.StreamInterface {
 		if wa.EndpointSuffix != "" {
 			url = url + "/" + string(wa.EndpointSuffix)
 		}
-		ws, err := web_socket.NewWebSocketWrapper(websocket.DefaultDialer, url)
+		// Prefer a user-provided socket factory if set
+		if wa.socketFactory != nil {
+			return wa.socketFactory(url)
+		}
+		// Otherwise use a custom dialer if provided, falling back to DefaultDialer
+		d := wa.dialer
+		if d == nil {
+			d = websocket.DefaultDialer
+		}
+		ws, err := web_socket.NewWebSocketWrapper(d, url)
 		if err != nil {
 			return nil, fmt.Errorf("websocket dial failed url=%s: %w", url, err)
 		}
@@ -141,4 +153,17 @@ func (wa *StreamBuilder) SetSymbol(symbol string) stream.StreamInterface {
 
 func (wa *StreamBuilder) Stream() stream.StreamInterface {
 	return wa.makeStream()
+}
+
+// WithDialer allows to set a custom websocket dialer (proxy/TLS/etc.).
+func (wa *StreamBuilder) WithDialer(d *websocket.Dialer) *StreamBuilder {
+	wa.dialer = d
+	return wa
+}
+
+// WithFactory allows to override socket creation completely. The function
+// receives the fully assembled websocket URL and must return a ready wrapper.
+func (wa *StreamBuilder) WithFactory(f func(url string) (web_socket.WebSocketCommonInterface, error)) *StreamBuilder {
+	wa.socketFactory = f
+	return wa
 }
