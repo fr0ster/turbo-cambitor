@@ -1,5 +1,16 @@
 # Release Notes for Turbo-Cambitor
 
+## v0.3.4
+
+### Release Date: 2025-10-10
+
+### Dependencies
+- Upgraded `github.com/fr0ster/turbo-restler` to v0.15.1.
+- Upgraded `github.com/fr0ster/turbo-signer/v2` to v2.0.3.
+
+### Notes
+- Local development continues to rely on the monorepo replace directives to use sibling checkouts.
+
 ## v0.3.3
 
 ### Release Date: 2025-08-24
